@@ -1,0 +1,2 @@
+/home/adshdl/Downloads/Dhadkan-main _refrence/Dhadkan-main/frontend/android/app/.cxx/Debug/3b2d246i/x86/CMakeFiles/edit_cache.dir
+/home/adshdl/Downloads/Dhadkan-main _refrence/Dhadkan-main/frontend/android/app/.cxx/Debug/3b2d246i/x86/CMakeFiles/rebuild_cache.dir
