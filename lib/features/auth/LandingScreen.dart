@@ -15,7 +15,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
 
@@ -26,6 +25,7 @@ class LandingScreen extends StatefulWidget {
 class _LandingScreenState extends State<LandingScreen> {
   final TextEditingController mobileController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  bool _obscurePassword = true; // New state variable for password visibility
 
   Future<void> handleLogin(BuildContext context) async {
     final String mobile = mobileController.text.trim();
@@ -46,24 +46,21 @@ class _LandingScreenState extends State<LandingScreen> {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text("Login Successful!")));
         Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => 
-              role == "patient" ?  const PatientHome() :  const DoctorHome()),
-            (Route<dynamic> route) => false,
-          );
+          MaterialPageRoute(builder: (context) =>
+          role == "patient" ?  const PatientHome() :  const DoctorHome()),
+              (Route<dynamic> route) => false,
+        );
 
       } else {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(response['message'])));
       }
     } catch (e) {
-          print(e);
+      print(e);
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('An error occurred during login.')));
     }
   }
-
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -73,12 +70,12 @@ class _LandingScreenState extends State<LandingScreen> {
         body: Wrapper(
             top: 100,
             child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   const Text('Dhadkan',
                       style:
-                          TextStyle(fontSize: 36, fontWeight: FontWeight.w600)),
+                      TextStyle(fontSize: 36, fontWeight: FontWeight.w600)),
                   Text('App for Heart Disease',
                       style: MyTextTheme.textTheme.bodyMedium)
                 ]),
@@ -86,7 +83,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 Image.asset('assets/Images/logo.png',
                     height: 70, width: 70, fit: BoxFit.cover),
               ]),
-              const SizedBox(height: 60),
+              const SizedBox(height: 55),
               Text('Login', style: MyTextTheme.textTheme.headlineLarge),
               const SizedBox(height: 24),
               TextFormField(
@@ -100,21 +97,32 @@ class _LandingScreenState extends State<LandingScreen> {
                       borderRadius: BorderRadius.circular(10)),
                   prefixIcon: const Icon(Icons.phone),
                   contentPadding: const EdgeInsets.symmetric(
-                      vertical: 17, horizontal: 10), // Adjust height
+                      vertical: 17, horizontal: 10),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: passwordController,
-                obscureText: true,
+                obscureText: _obscurePassword, // Use the state variable here
                 decoration: InputDecoration(
                   labelText: 'Password',
                   hintText: 'Password',
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10)),
                   prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      color: MyColors.primary,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword; // Toggle visibility
+                      });
+                    },
+                  ),
                   contentPadding: const EdgeInsets.symmetric(
-                      vertical: 15, horizontal: 10), // Adjust height
+                      vertical: 15, horizontal: 10),
                 ),
               ),
               const SizedBox(height: 16),
@@ -132,22 +140,22 @@ class _LandingScreenState extends State<LandingScreen> {
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                    Text(
-                      "Don't have an account?",
-                      style: MyTextTheme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(width: 5),
-                    GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SelectionScreen(),
-                              ));
-                        },
-                        child: Text('Sign Up',
-                            style: MyTextTheme.textTheme.headlineSmall))
-                  ]))
+                        Text(
+                          "Don't have an account?",
+                          style: MyTextTheme.textTheme.bodyMedium,
+                        ),
+                        const SizedBox(width: 5),
+                        GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SelectionScreen(),
+                                  ));
+                            },
+                            child: Text('Sign Up',
+                                style: MyTextTheme.textTheme.headlineSmall))
+                      ]))
             ])));
   }
 

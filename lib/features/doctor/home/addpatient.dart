@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 class AddPatient extends StatefulWidget {
   const AddPatient({super.key});
   @override
-  
+
   State<AddPatient> createState() => _AddPatientState();
 }
 class _AddPatientState extends State<AddPatient> {

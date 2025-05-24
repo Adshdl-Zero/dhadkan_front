@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import 'UploadReport.dart';
 import 'package:dhadkan_front/utils/http/http_client.dart';
 import 'package:dhadkan_front/utils/storage/secure_storage_service.dart';
@@ -155,11 +159,14 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   void _viewFile(String path, String type, String reportName) {
+    // Use the url field from ReportFile if available, otherwise construct with mediaURL
+    String filePath = path.startsWith('http') ? path : MyHttpHelper.mediaURL + path;
+    print('Viewing file: $filePath (type: $type, name: $reportName)');
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => FileViewerScreen(
-          filePath: MyHttpHelper.mediaURL + path,
+          filePath: filePath,
           fileType: type,
           reportName: reportName,
         ),
@@ -170,7 +177,7 @@ class _ReportPageState extends State<ReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEFF1FF), // Changed to match PatientDrugDataScreen
+      backgroundColor: const Color(0xFFEFF1FF),
       appBar: AppBar(
         title: Text(
           'Medical Reports',
@@ -294,7 +301,7 @@ class _ReportPageState extends State<ReportPage> {
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
-                        elevation: 0, // Remove shadow
+                        elevation: 0,
                         color: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -338,7 +345,7 @@ class _ReportPageState extends State<ReportPage> {
                               const SizedBox(width: 12),
                               ElevatedButton(
                                 onPressed: () {
-                                  _viewFile(reportFile.path, reportFile.type, reportType['name'] as String);
+                                  _viewFile(reportFile.url, reportFile.type, reportType['name'] as String);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: MyColors.primary,
@@ -362,7 +369,7 @@ class _ReportPageState extends State<ReportPage> {
                 ),
                 Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.white,
                   ),
                   child: SafeArea(
@@ -399,7 +406,7 @@ class _ReportPageState extends State<ReportPage> {
 }
 
 // FileViewerScreen class
-class FileViewerScreen extends StatelessWidget {
+class FileViewerScreen extends StatefulWidget {
   final String filePath;
   final String fileType;
   final String reportName;
@@ -412,47 +419,138 @@ class FileViewerScreen extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _FileViewerScreenState createState() => _FileViewerScreenState();
+}
+
+class _FileViewerScreenState extends State<FileViewerScreen> {
+  String? _localFilePath;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.fileType == 'pdf') {
+      _downloadAndSaveFile();
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _downloadAndSaveFile() async {
+    try {
+      print('Downloading file from: ${widget.filePath}');
+      String? token = await SecureStorageService.getData('authToken');
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await http.get(
+        Uri.parse(widget.filePath),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to download file: ${response.statusCode}');
+      }
+
+      final tempDir = await getTemporaryDirectory();
+      final fileExtension = widget.fileType == 'pdf' ? 'pdf' : widget.fileType;
+      final file = File('${tempDir.path}/${widget.reportName}.$fileExtension');
+      await file.writeAsBytes(response.bodyBytes);
+
+      setState(() {
+        _localFilePath = file.path;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error downloading file: $e');
+      setState(() {
+        _errorMessage = 'Failed to load file: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_localFilePath != null) {
+      File(_localFilePath!).delete().then((_) {
+        print('Temporary file deleted: $_localFilePath');
+      }).catchError((e) {
+        print('Error deleting temporary file: $e');
+      });
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(reportName),
+        title: Text(widget.reportName),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Center(
-        child: fileType == 'pdf'
-            ? Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.picture_as_pdf, size: 64, color: Colors.white),
-              const SizedBox(height: 16),
-              const Text(
-                'PDF Viewer',
-                style: TextStyle(color: Colors.white, fontSize: 18),
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : _errorMessage != null
+            ? Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.white),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(color: Colors.white, fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isLoading = true;
+                  _errorMessage = null;
+                  _downloadAndSaveFile();
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: MyColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'PDF viewing functionality will be implemented here',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  // Implement external PDF viewer launch or use a package like flutter_pdfview
-                },
-                child: const Text('Open PDF'),
-              ),
-            ],
-          ),
+              child: const Text('Retry'),
+            ),
+          ],
+        )
+            : widget.fileType == 'pdf' && _localFilePath != null
+            ? PDFView(
+          filePath: _localFilePath!,
+          enableSwipe: true,
+          swipeHorizontal: false,
+          autoSpacing: true,
+          pageFling: true,
+          onError: (error) {
+            setState(() {
+              _errorMessage = 'Failed to load PDF: $error';
+            });
+          },
+          onPageError: (page, error) {
+            setState(() {
+              _errorMessage = 'Error on page $page: $error';
+            });
+          },
         )
             : InteractiveViewer(
           child: Image.network(
-            filePath,
+            widget.filePath,
             fit: BoxFit.contain,
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
@@ -467,25 +565,22 @@ class FileViewerScreen extends StatelessWidget {
               );
             },
             errorBuilder: (context, error, stackTrace) {
-              return Container(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 64, color: Colors.white),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Failed to load image',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      error.toString(),
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.white),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Failed to load image',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    error.toString(),
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               );
             },
           ),

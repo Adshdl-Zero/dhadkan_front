@@ -83,19 +83,13 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
   }
 
   Widget _buildPatientCard(Map<String, dynamic> patientData) {
-    // Ensure patientData['patient'] is treated as nullable Map<String, dynamic>
-    // and default to an empty map if null.
     final patient = patientData['patient'] as Map<String, dynamic>? ?? {};
     final graphData = patientData['graphData'];
 
-    // Line 93, now with an explicit check for the key's existence and then toString()
     final name = (patient.containsKey('name') ? patient['name']?.toString() : null) ?? 'Name not available';
     final mobile = (patient.containsKey('mobile') ? patient['mobile']?.toString() : null) ?? 'Mobile not available';
     final patientId = (patient.containsKey('_id') ? patient['_id']?.toString() : null) ?? '_id not available';
     final uhid = (patient.containsKey('uhid') ? patient['uhid']?.toString() : null) ?? 'UHID not available';
-
-    // print('Patient Name: $name, Type: ${name.runtimeType}');
-    // print('Patient Mobile: $mobile, Type: ${mobile.runtimeType}');
 
     return Container(
       margin: const EdgeInsets.only(top: 20),
@@ -103,14 +97,7 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        // Removed the boxShadow property entirely to remove the shadow
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,22 +122,22 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
                   TextButton(
                     onPressed: () => _navigateToPatientDetail(mobile, name, patientId),
                     style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero, // Remove default padding if you want text closer to icon
-                      minimumSize: Size.zero, // Remove minimum size constraints
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Shrink hit test area
-                      alignment: Alignment.centerRight, // Align content to the right
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      alignment: Alignment.centerRight,
                     ),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min, // Keep row content tight
+                      mainAxisSize: MainAxisSize.min,
                       children: const [
                         Text(
                           'More Info',
-                          style: TextStyle(fontSize: 14, color: Colors.black54), // Adjust color as needed
+                          style: TextStyle(fontSize: 14, color: Colors.black54),
                         ),
                         Icon(
                           Icons.chevron_right,
-                          size: 20, // Adjust icon size to fit text
-                          color: Colors.black54, // Adjust color as needed
+                          size: 20,
+                          color: Colors.black54,
                         ),
                       ],
                     ),

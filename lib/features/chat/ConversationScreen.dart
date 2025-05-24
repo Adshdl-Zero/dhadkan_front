@@ -10,6 +10,7 @@ import 'package:dhadkan_front/utils/storage/secure_storage_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 
 import '../auth/LandingScreen.dart'; // Assuming LandingScreen.dart is in this path
 
@@ -83,6 +84,98 @@ class _ConversationScreenState extends State<ConversationScreen> {
     }
   }
 
+  String _formatMessageTime(String timeString) {
+    try {
+      DateTime messageTime = DateTime.parse(timeString);
+      // Show only time (no date)
+      return DateFormat('HH:mm').format(messageTime);
+    } catch (e) {
+      return '';
+    }
+  }
+
+  String _getDateHeader(DateTime messageDate) {
+    DateTime now = DateTime.now();
+    DateTime today = DateTime(now.year, now.month, now.day);
+    DateTime yesterday = today.subtract(const Duration(days: 1));
+    DateTime messageDay = DateTime(messageDate.year, messageDate.month, messageDate.day);
+
+    if (messageDay == today) {
+      return "TODAY";
+    } else if (messageDay == yesterday) {
+      return "YESTERDAY";
+    } else if (messageDay.isAfter(today.subtract(const Duration(days: 7)))) {
+      // Within last 7 days, show day name
+      return DateFormat('EEEE').format(messageDate).toUpperCase();
+    } else {
+      // Older than 7 days, show date
+      return DateFormat('dd/MM/yyyy').format(messageDate);
+    }
+  }
+
+  List<Widget> _buildMessageWidgets() {
+    List<Widget> widgets = [];
+    String? lastDateHeader;
+
+    for (int i = 0; i < _chats.length; i++) {
+      var item = _chats[i];
+
+      if (item['message_type'] == 'text') {
+        try {
+          DateTime messageTime = DateTime.parse(item['time'] ?? '');
+          String currentDateHeader = _getDateHeader(messageTime);
+
+          // Add date header if it's different from the last one
+          if (lastDateHeader != currentDateHeader) {
+            widgets.add(
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF128C7E).withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: Text(
+                      currentDateHeader,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+            lastDateHeader = currentDateHeader;
+          }
+
+          // Add the message
+          widgets.add(
+            TextMessage(
+              text: item['text']!,
+              mine: item['mine'], // 'mine' flag distinguishes sender
+              time: _formatMessageTime(item['time'] ?? ''),
+            ),
+          );
+        } catch (e) {
+          // If date parsing fails, just add the message without date header
+          widgets.add(
+            TextMessage(
+              text: item['text']!,
+              mine: item['mine'],
+              time: _formatMessageTime(item['time'] ?? ''),
+            ),
+          );
+        }
+      }
+    }
+
+    return widgets;
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MyDeviceUtils.getScreenWidth(context);
@@ -102,12 +195,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         const SizedBox(height: 10),
-                        for (var item in _chats)
-                          if (item['message_type'] == 'text')
-                            TextMessage(
-                              text: item['text']!,
-                              mine: item['mine'], // 'mine' flag distinguishes sender
-                            )
+                        ..._buildMessageWidgets(),
                       ]))),
           // Display ChatTextBox only if token is available
           if (_token.isNotEmpty)

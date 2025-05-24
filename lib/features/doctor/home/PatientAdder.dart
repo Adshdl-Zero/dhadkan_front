@@ -4,7 +4,7 @@ import 'package:dhadkan_front/features/auth/LandingScreen.dart';
 import 'package:dhadkan_front/features/doctor/home/DoctorHome.dart';
 import 'package:dhadkan_front/utils/constants/colors.dart';
 import 'package:dhadkan_front/utils/device/device_utility.dart';
-import 'package:dhadkan_front/utils/http/http_client.dart'; 
+import 'package:dhadkan_front/utils/http/http_client.dart';
 import 'package:dhadkan_front/utils/storage/secure_storage_service.dart';
 import 'package:dhadkan_front/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
@@ -265,7 +265,7 @@ class _PatientadderState extends State<Patientadder> {
     );
   }
 
-  
+
   Widget _buildGenderDropdown() {
     return DropdownButtonFormField<String>(
       value: selectedGender,
@@ -307,6 +307,17 @@ class _PatientadderState extends State<Patientadder> {
           children: [
             IconButton(
               icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
+            IconButton(
+              icon: Icon(
                 Icons.mic,
                 color: (currentListeningController == passwordController && isListening)
                     ? Colors.red
@@ -318,17 +329,6 @@ class _PatientadderState extends State<Patientadder> {
                 } else {
                   startListening(passwordController);
                 }
-              },
-            ),
-            IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                color: Colors.grey,
-              ),
-              onPressed: () {
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
               },
             ),
           ],

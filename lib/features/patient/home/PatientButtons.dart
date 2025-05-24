@@ -6,7 +6,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class PatientButtons extends StatelessWidget {
-  const PatientButtons({super.key});
+  final String patientId;
+  final String doctorId;
+  const PatientButtons({
+    super.key,
+    required this.doctorId,
+    required this.patientId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,13 +20,19 @@ class PatientButtons extends StatelessWidget {
       Navigator.pushNamed(context, 'patient/add/');
     }
 
-    void handleChatButtonPress() {
-      Navigator.push(
+    void handleChatPress() {
+      Navigator.pushNamed(
         context,
-        MaterialPageRoute(
-          builder: (context) =>
-              const ConversationScreen(receiver_id: "6751759e2c8cb1ca541ba53a"),
-        ),
+        'chat/',
+        arguments: doctorId,
+      );
+    }
+
+    void handleReportsPress() {
+      Navigator.pushNamed(
+        context,
+        'reports/',
+        arguments: patientId,
       );
     }
 
@@ -41,13 +53,13 @@ class PatientButtons extends StatelessWidget {
             width: 20,
           ),
           PatientButton(title: "Chat", 
-          handleClick: (){}
+          handleClick: handleChatPress,
           // handleChatButtonPress
           ),
           const SizedBox(
             width: 20,
           ),
-          PatientButton(title: "Medication", handleClick: (){}),
+          PatientButton(title: "Reports", handleClick: handleReportsPress,),
         ],
       ),
     );

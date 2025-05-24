@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 import '../../../utils/device/device_utility.dart';
 import 'DoctorButtons.dart';
 import 'Heading.dart';
-import 'Histogram.dart';
-import 'DoctorPie.dart';
+// import 'Histogram.dart';
+// import 'DoctorPie.dart';
 
 class DoctorHome extends StatefulWidget {
   const DoctorHome({super.key});

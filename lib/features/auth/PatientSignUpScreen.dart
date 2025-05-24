@@ -16,7 +16,7 @@ class PatientSignUpScreen extends StatefulWidget {
 
 class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController addressController = TextEditingController();
+  final TextEditingController uhidController = TextEditingController();
   String? selectedGender;
   final TextEditingController ageController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -29,7 +29,6 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
   bool isListening = false;
   TextEditingController? currentListeningController;
 
-  // Added for show/hide password toggle
   bool _obscurePassword = true;
 
   @override
@@ -81,7 +80,7 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
 
   Future<void> handleSignUp(BuildContext context) async {
     final String name = nameController.text.trim();
-    final String address = addressController.text.trim();
+    final String uhid = uhidController.text.trim();
     final String? gender = selectedGender;
     final String age = ageController.text.trim();
     final String email = emailController.text.trim();
@@ -91,6 +90,7 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
     final String doctorNumber = doctorNumberController.text.trim();
 
     if (name.isEmpty ||
+        uhid.isEmpty ||
         phone.isEmpty ||
         password.isEmpty ||
         age.isEmpty ||
@@ -108,6 +108,7 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
         'name': name,
         'mobile': phone,
         'password': password,
+        'uhid': uhid,
         'email': email,
         'age': age,
         'gender': gender,
@@ -138,7 +139,6 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
     var paddingWidth = screenWidth * 0.05;
 
     return Scaffold(
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -167,7 +167,7 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
               const SizedBox(height: 10),
               _buildTextFormField(label: 'Name', controller: nameController),
               const SizedBox(height: 20),
-              _buildTextFormField(label: 'Address', controller: addressController),
+              _buildTextFormField(label: 'UHID', controller: uhidController),
               const SizedBox(height: 20),
               _buildGenderDropdown(),
               const SizedBox(height: 20),
@@ -226,6 +226,17 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
           children: [
             IconButton(
               icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
+            IconButton(
+              icon: Icon(
                 Icons.mic,
                 color: (currentListeningController == controller && isListening)
                     ? Colors.red
@@ -237,17 +248,6 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
                 } else {
                   startListening(controller);
                 }
-              },
-            ),
-            IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                color: Colors.grey,
-              ),
-              onPressed: () {
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
               },
             ),
           ],
@@ -275,10 +275,7 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
   }
 
   Widget _buildGenderDropdown() {
-
-
     return DropdownButtonFormField<String>(
-
       value: selectedGender,
       decoration: InputDecoration(
         labelText: 'Gender',
@@ -286,7 +283,6 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
       ),
       items: ['Male', 'Female', 'Other'].map((String gender) {
         return DropdownMenuItem<String>(
-
           value: gender,
           child: Text(
             gender,

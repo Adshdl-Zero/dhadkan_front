@@ -16,15 +16,33 @@ class PatientGraph extends StatelessWidget {
     double screenWidth = MyDeviceUtils.getScreenWidth(context);
     double width = screenWidth * 0.95;
 
-    List<double> xValues = [];
+    // Convert the data to match the format expected by Graph widget
+    // The graphData now comes in format: {'sbp': [], 'dbp': [], 'weight': []}
     List<double> diastolic = convertType(graphData['dbp']);
     List<double> systolic = convertType(graphData['sbp']);
     List<double> weight = convertType(graphData['weight']);
 
-    for (int i = 0; i < diastolic.length; i++) {
+    // Generate x-values based on the length of the data
+    // Use the maximum length among all data arrays to ensure proper indexing
+    int maxLength = [diastolic.length, systolic.length, weight.length]
+        .reduce((a, b) => a > b ? a : b);
+
+    List<double> xValues = [];
+    for (int i = 0; i < maxLength; i++) {
       xValues.add(i.toDouble());
     }
-    
+
+    // Ensure all arrays have the same length by padding with zeros if necessary
+    while (diastolic.length < maxLength) {
+      diastolic.add(0.0);
+    }
+    while (systolic.length < maxLength) {
+      systolic.add(0.0);
+    }
+    while (weight.length < maxLength) {
+      weight.add(0.0);
+    }
+
     return Container(
         width: width,
         padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 8),
@@ -38,7 +56,12 @@ class PatientGraph extends StatelessWidget {
             width: width - 20));
   }
 
-  static List<double> convertType(List<dynamic> arr) {
+  static List<double> convertType(List<dynamic>? arr) {
+    // Handle null or empty arrays
+    if (arr == null || arr.isEmpty) {
+      return [];
+    }
+
     return arr.map((e) {
       if (e is num) {
         return e.toDouble();

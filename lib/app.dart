@@ -5,10 +5,10 @@ import 'package:dhadkan_front/features/doctor/home/DoctorHome.dart';
 import 'package:dhadkan_front/features/doctor/home/drug.dart/adddrug.dart';
 import 'package:dhadkan_front/features/doctor/home/addpatient.dart';
 import 'package:dhadkan_front/features/doctor/home/allPatientsPage.dart';
-import 'package:dhadkan_front/features/doctor/patientList/PatientList.dart';
+// import 'package:dhadkan_front/features/doctor/patientList/PatientList.dart';
 import 'package:dhadkan_front/features/patient/addData/AddDataScreen.dart';
 import 'package:dhadkan_front/features/patient/home/PatientHomeScreen.dart';
-import 'package:dhadkan_front/features/patient/tests/TestsScreen.dart';
+// import 'package:dhadkan_front/features/patient/tests/TestsScreen.dart';
 import 'package:dhadkan_front/utils/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:dhadkan_front/features/report/Report.dart'; // Add this import
@@ -31,9 +31,9 @@ class MyApp extends StatelessWidget {
         'landing': (context) => const LandingScreen(),
         'patient/home/': (context) => const PatientHome(),
         'patient/add/': (context) => const AddData(),
-        'patient/tests/': (context) => const TestsScreen(),
+        // 'patient/tests/': (context) => const TestsScreen(),
         'doctor/home/': (context) => const DoctorHome(),
-        'doctor/all-patients': (context) => const PatientList(),
+        // 'doctor/all-patients': (context) => const PatientList(),
         'doctor/addpatient/': (context) => const AddPatient(),
         'doctor/allpatient/': (context) => const AllPatientsPage(),
         'doctor/adddrugpatient/': (context) {

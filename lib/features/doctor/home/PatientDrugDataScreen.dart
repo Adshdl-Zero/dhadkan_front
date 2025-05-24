@@ -180,6 +180,10 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
       weightValues.add(record.weight ?? 0);
     }
 
+    sbpValues = sbpValues.reversed.toList();
+    dbpValues = dbpValues.reversed.toList();
+    weightValues = weightValues.reversed.toList();
+
     // Return data in format expected by PatientGraph
     return {
       'sbp': sbpValues,
@@ -196,7 +200,7 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
         backgroundColor: const Color(0xFF03045E),
         title: Text(
           'Drug data for ${widget.patientName}',
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+          style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold,),
         ),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
@@ -467,7 +471,7 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
         childrenPadding: EdgeInsets.zero,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
