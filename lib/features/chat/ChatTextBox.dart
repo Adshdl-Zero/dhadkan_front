@@ -1,8 +1,8 @@
-import 'dart:io';
-import 'package:dhadkan_front/features/common/Wrapper.dart';
-import 'package:dhadkan_front/utils/constants/colors.dart';
-import 'package:dhadkan_front/utils/device/device_utility.dart';
-import 'package:dhadkan_front/utils/http/http_client.dart';
+
+import 'package:dhadkan/features/common/Wrapper.dart';
+import 'package:dhadkan/utils/constants/colors.dart';
+import 'package:dhadkan/utils/device/device_utility.dart';
+import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:flutter/material.dart';
 
 class ChatTextBox extends StatefulWidget {

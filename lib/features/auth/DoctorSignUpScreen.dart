@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'package:dhadkan_front/utils/constants/colors.dart';
-import 'package:dhadkan_front/utils/device/device_utility.dart';
-import 'package:dhadkan_front/utils/theme/text_theme.dart';
+import 'package:dhadkan/utils/constants/colors.dart';
+import 'package:dhadkan/utils/device/device_utility.dart';
+import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:dhadkan_front/utils/http/http_client.dart';
+import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:dhadkan_front/features/auth/LandingScreen.dart';
+import 'package:dhadkan/features/auth/LandingScreen.dart';
 
 class DoctorSignUpScreen extends StatefulWidget {
   const DoctorSignUpScreen({super.key});
@@ -26,11 +26,14 @@ class _DoctorSignUpScreenState extends State<DoctorSignUpScreen> {
   TextEditingController? currentListeningController;
   bool _obscurePassword = true;
 
+  bool _isSubmitting = false;
+
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
   }
+
 
   void startListening(TextEditingController controller) async {
     if (!await _speech.initialize(
@@ -74,6 +77,11 @@ class _DoctorSignUpScreenState extends State<DoctorSignUpScreen> {
   }
 
   Future<void> handleSignUp(BuildContext context) async {
+    if (_isSubmitting) return; // Prevent multiple calls
+    setState(() {
+      _isSubmitting = true; // Lock the button
+    });
+
     String name = nameController.text.trim();
     String phone = phoneController.text.trim();
     String email = emailController.text.trim();
@@ -84,6 +92,9 @@ class _DoctorSignUpScreenState extends State<DoctorSignUpScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
+      setState(() {
+        _isSubmitting = false; // Unlock the button
+      });
       return;
     }
 
@@ -107,12 +118,18 @@ class _DoctorSignUpScreenState extends State<DoctorSignUpScreen> {
         Navigator.of(context).pushNamedAndRemoveUntil('landing', (route) => false);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(response['message'] ?? 'Registration failed!')));
+          content: Text(response['message'] ?? 'Registration failed!'),
+        ));
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('An error occurred during registration')));
+        content: Text('An error occurred during registration'),
+      ));
     }
+
+    setState(() {
+      _isSubmitting = false; // Unlock the button after process
+    });
   }
 
   @override
@@ -168,16 +185,16 @@ class _DoctorSignUpScreenState extends State<DoctorSignUpScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () => handleSignUp(context),
+                  onPressed: _isSubmitting ? null : () => handleSignUp(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: MyColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'Register',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  child: Text(
+                    _isSubmitting ? 'Registering...' : 'Register',
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),
               ),

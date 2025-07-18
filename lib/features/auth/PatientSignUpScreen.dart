@@ -1,9 +1,9 @@
-import 'package:dhadkan_front/utils/constants/colors.dart';
-import 'package:dhadkan_front/utils/device/device_utility.dart';
-import 'package:dhadkan_front/utils/theme/text_theme.dart';
+import 'package:dhadkan/utils/constants/colors.dart';
+import 'package:dhadkan/utils/device/device_utility.dart';
+import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:dhadkan_front/features/auth/LandingScreen.dart';
+import 'package:dhadkan/features/auth/LandingScreen.dart';
 
 import '../../utils/http/http_client.dart';
 
@@ -30,6 +30,7 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
   TextEditingController? currentListeningController;
 
   bool _obscurePassword = true;
+  bool _isSubmitting = false; // 🔑 Added
 
   @override
   void initState() {
@@ -79,6 +80,12 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
   }
 
   Future<void> handleSignUp(BuildContext context) async {
+    if (_isSubmitting) return; // Prevent duplicate submissions
+
+    setState(() {
+      _isSubmitting = true; // Lock the button
+    });
+
     final String name = nameController.text.trim();
     final String uhid = uhidController.text.trim();
     final String? gender = selectedGender;
@@ -99,6 +106,9 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
         gender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please fill in all fields')));
+      setState(() {
+        _isSubmitting = false; // Unlock if validation fails
+      });
       return;
     }
 
@@ -122,15 +132,20 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
         await Future.delayed(const Duration(milliseconds: 500));
         if (!mounted) return;
         Navigator.of(context).pushNamedAndRemoveUntil('landing', (route) => false);
-      }
-      else {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(response['message'] ?? 'Registration failed!')));
+          content: Text(response['message'] ?? 'Registration failed!'),
+        ));
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('An error occurred during registration')));
+        content: Text('An error occurred during registration'),
+      ));
     }
+
+    setState(() {
+      _isSubmitting = false; // Unlock after completion
+    });
   }
 
   @override
@@ -151,8 +166,7 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
         ),
         title: Text(
           'Patient Registration',
-          style: MyTextTheme.textTheme.headlineSmall
-              ?.copyWith(color: Colors.black),
+          style: MyTextTheme.textTheme.headlineSmall?.copyWith(color: Colors.black),
         ),
         centerTitle: true,
       ),
@@ -191,14 +205,17 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () => handleSignUp(context),
+                  onPressed: _isSubmitting ? null : () => handleSignUp(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: MyColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text('Sign Up', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  child: Text(
+                    _isSubmitting ? 'Signing Up...' : 'Sign Up',
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -208,6 +225,7 @@ class _PatientSignUpScreenState extends State<PatientSignUpScreen> {
       ),
     );
   }
+
 
   Widget _buildTextFormField({
     required String label,

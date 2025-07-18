@@ -4,8 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser; // Ensure correct import
 
 class MyHttpHelper {
-  // static const String _baseUrl = 'http://10.0.2.2:3000';
-  static const String _baseUrl = 'https://dhadkan-backend.onrender.com';
+  // static const String _baseUrl = 'http://192.168.29.52:3000';
+   static const String _baseUrl = 'https://dhadkan-backend.onrender.com';
   static const mediaURL = "$_baseUrl/media/";
 
   static Future<Map<String, dynamic>> get(String endpoint, String token) async {
@@ -32,6 +32,17 @@ class MyHttpHelper {
         'Authorization': 'Bearer $token'
       },
       body: json.encode(data),
+    );
+    return _handleResponse(response);
+  }
+
+  static Future<Map<String, dynamic>> private_delete(String endpoint, String token) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl$endpoint/'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
     return _handleResponse(response);
   }

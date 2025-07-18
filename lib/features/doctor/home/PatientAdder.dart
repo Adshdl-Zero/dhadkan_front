@@ -1,12 +1,10 @@
 import 'dart:convert';
-
-import 'package:dhadkan_front/features/auth/LandingScreen.dart';
-import 'package:dhadkan_front/features/doctor/home/DoctorHome.dart';
-import 'package:dhadkan_front/utils/constants/colors.dart';
-import 'package:dhadkan_front/utils/device/device_utility.dart';
-import 'package:dhadkan_front/utils/http/http_client.dart';
-import 'package:dhadkan_front/utils/storage/secure_storage_service.dart';
-import 'package:dhadkan_front/utils/theme/text_theme.dart';
+import 'package:dhadkan/features/doctor/home/DoctorHome.dart';
+import 'package:dhadkan/utils/constants/colors.dart';
+import 'package:dhadkan/utils/device/device_utility.dart';
+import 'package:dhadkan/utils/http/http_client.dart';
+import 'package:dhadkan/utils/storage/secure_storage_service.dart';
+import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:http/http.dart' as http;
@@ -28,6 +26,7 @@ class _PatientadderState extends State<Patientadder> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isButtonLocked = false; // New state variable to lock button
 
   late stt.SpeechToText _speech;
   bool isListening = false;
@@ -47,6 +46,7 @@ class _PatientadderState extends State<Patientadder> {
         _token = token ?? '';
       });
     }
+    _generatePassword();
   }
 
   void startListening(TextEditingController controller) async {
@@ -90,7 +90,32 @@ class _PatientadderState extends State<Patientadder> {
     });
   }
 
+  void _generatePassword() {
+    final name = nameController.text.trim();
+    final mobile = mobileController.text.trim();
+
+    String firstName = name.split(' ').first.toLowerCase();
+    String namePart = firstName.length >= 4
+        ? firstName.substring(0, 4)
+        : firstName;
+
+    String mobileDigits = mobile.replaceAll(RegExp(r'[^0-9]'), '');
+    String mobilePart = mobileDigits.length >= 4
+        ? mobileDigits.substring(mobileDigits.length - 4)
+        : mobileDigits;
+
+    setState(() {
+      passwordController.text = namePart + mobilePart;
+    });
+  }
+
   Future<void> handleAdd(BuildContext context) async {
+    if (_isButtonLocked) return; // Prevent further clicks
+
+    setState(() {
+      _isButtonLocked = true; // Lock the button
+    });
+
     final String name = nameController.text.trim();
     final String? gender = selectedGender;
     final String mobile = mobileController.text.trim();
@@ -103,6 +128,9 @@ class _PatientadderState extends State<Patientadder> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
+      setState(() {
+        _isButtonLocked = false; // Unlock on error
+      });
       return;
     }
 
@@ -113,6 +141,9 @@ class _PatientadderState extends State<Patientadder> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid age')),
       );
+      setState(() {
+        _isButtonLocked = false; // Unlock on error
+      });
       return;
     }
     int uhid;
@@ -122,6 +153,9 @@ class _PatientadderState extends State<Patientadder> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid uhid')),
       );
+      setState(() {
+        _isButtonLocked = false; // Unlock on error
+      });
       return;
     }
 
@@ -150,6 +184,9 @@ class _PatientadderState extends State<Patientadder> {
             SnackBar(content: Text(response['message'] ?? 'An error occurred.')),
           );
         }
+        setState(() {
+          _isButtonLocked = false; // Unlock on error
+        });
         return;
       }
 
@@ -162,6 +199,9 @@ class _PatientadderState extends State<Patientadder> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('An error occurred during registration')),
       );
+      setState(() {
+        _isButtonLocked = false; // Unlock on error
+      });
     }
   }
 
@@ -199,9 +239,17 @@ class _PatientadderState extends State<Patientadder> {
         children: [
           Text('Sign-Up Information', style: MyTextTheme.textTheme.headlineSmall),
           const SizedBox(height: 10),
-          _buildTextFormField(label: 'Name', controller: nameController),
+          _buildTextFormField(
+            label: 'Name',
+            controller: nameController,
+            generatePasswordOnChange: true,
+          ),
           const SizedBox(height: 20),
-          _buildTextFormField(label: 'Phone Number', controller: mobileController),
+          _buildTextFormField(
+            label: 'Phone Number',
+            controller: mobileController,
+            generatePasswordOnChange: true,
+          ),
           const SizedBox(height: 20),
           _buildGenderDropdown(),
           const SizedBox(height: 20),
@@ -217,12 +265,14 @@ class _PatientadderState extends State<Patientadder> {
             width: double.infinity,
             height: 50,
             child: ElevatedButton(
-              onPressed: () => handleAdd(context),
+              onPressed: _isButtonLocked ? null : () => handleAdd(context), // Disable button if locked
               style: ElevatedButton.styleFrom(
                 backgroundColor: MyColors.primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text(
+              child: _isButtonLocked
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
                 'Add this Patient...',
                 style: TextStyle(color: Colors.white, fontSize: 16),
               ),
@@ -237,6 +287,7 @@ class _PatientadderState extends State<Patientadder> {
   Widget _buildTextFormField({
     required String label,
     required TextEditingController controller,
+    bool generatePasswordOnChange = false,
   }) {
     return TextFormField(
       controller: controller,
@@ -262,9 +313,13 @@ class _PatientadderState extends State<Patientadder> {
       keyboardType: label == 'Age' || label == 'Phone Number'
           ? TextInputType.number
           : TextInputType.text,
+      onChanged: (value) {
+        if (generatePasswordOnChange) {
+          _generatePassword();
+        }
+      },
     );
   }
-
 
   Widget _buildGenderDropdown() {
     return DropdownButtonFormField<String>(
@@ -295,6 +350,7 @@ class _PatientadderState extends State<Patientadder> {
       },
     );
   }
+
   Widget _buildPasswordField() {
     return TextFormField(
       controller: passwordController,

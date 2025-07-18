@@ -25,6 +25,7 @@ class MyColors {
   static const Color dColor = Color(0xFF60B91F);
   static const Color sColor = Color(0xFF3B83F4);
   static const Color weightColor = Color(0xFF138d75);
+  static const Color hrColor = Color(0xFFFF6B6B);
 
   static const Color otherColor = Color(0xFF3B83F4);
   static const Color myColor = Color.fromRGBO(0, 0, 0, 0.1);

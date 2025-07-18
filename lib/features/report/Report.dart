@@ -5,11 +5,11 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'UploadReport.dart';
-import 'package:dhadkan_front/utils/http/http_client.dart';
-import 'package:dhadkan_front/utils/storage/secure_storage_service.dart';
-import 'package:dhadkan_front/utils/theme/text_theme.dart';
-import 'package:dhadkan_front/utils/theme/theme.dart';
-import 'package:dhadkan_front/utils/constants/colors.dart';
+import 'package:dhadkan/utils/http/http_client.dart';
+import 'package:dhadkan/utils/storage/secure_storage_service.dart';
+import 'package:dhadkan/utils/theme/text_theme.dart';
+import 'package:dhadkan/utils/theme/theme.dart';
+import 'package:dhadkan/utils/constants/colors.dart';
 
 // Report class
 class Report {

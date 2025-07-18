@@ -1,6 +1,6 @@
-import 'package:dhadkan_front/features/doctor/home/DoctorButton.dart';
-import 'package:dhadkan_front/utils/device/device_utility.dart';
-import 'package:dhadkan_front/utils/theme/text_theme.dart';
+import 'package:dhadkan/features/doctor/home/DoctorButton.dart';
+import 'package:dhadkan/utils/device/device_utility.dart';
+import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

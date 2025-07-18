@@ -1,0 +1,2 @@
+C:/Users/lokes/Downloads/dhadkan_front-main (3)/dhadkan_front-main/android/app/.cxx/Debug/2c1y4h57/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/lokes/Downloads/dhadkan_front-main (3)/dhadkan_front-main/android/app/.cxx/Debug/2c1y4h57/arm64-v8a/CMakeFiles/rebuild_cache.dir

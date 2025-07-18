@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:dhadkan_front/features/chat/ChatTextBox.dart';
-import 'package:dhadkan_front/features/chat/TextMessage.dart';
-import 'package:dhadkan_front/features/common/TopBar.dart';
-import 'package:dhadkan_front/features/common/Wrapper.dart';
-import 'package:dhadkan_front/utils/device/device_utility.dart';
-import 'package:dhadkan_front/utils/http/http_client.dart';
-import 'package:dhadkan_front/utils/storage/secure_storage_service.dart';
+import 'package:dhadkan/features/chat/ChatTextBox.dart';
+import 'package:dhadkan/features/chat/TextMessage.dart';
+import 'package:dhadkan/features/common/TopBar.dart';
+
+import 'package:dhadkan/utils/device/device_utility.dart';
+import 'package:dhadkan/utils/http/http_client.dart';
+import 'package:dhadkan/utils/storage/secure_storage_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';

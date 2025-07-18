@@ -1,11 +1,11 @@
-import 'package:dhadkan_front/features/auth/LandingScreen.dart';
-import 'package:dhadkan_front/features/doctor/home/PatientDrugDataScreen.dart';
-import 'package:dhadkan_front/features/patient/home/PatientGraph.dart';
-import 'package:dhadkan_front/utils/device/device_utility.dart';
-import 'package:dhadkan_front/utils/storage/secure_storage_service.dart';
+import 'package:dhadkan/features/auth/LandingScreen.dart';
+import 'package:dhadkan/features/doctor/home/PatientDrugDataScreen.dart';
+import 'package:dhadkan/features/patient/home/PatientGraph.dart';
+import 'package:dhadkan/utils/device/device_utility.dart';
+import 'package:dhadkan/utils/storage/secure_storage_service.dart';
 import 'package:flutter/material.dart';
-import 'package:dhadkan_front/utils/http/http_client.dart';
-import 'package:dhadkan_front/features/common/TopBar.dart';
+import 'package:dhadkan/utils/http/http_client.dart';
+import 'package:dhadkan/features/common/TopBar.dart';
 
 class AllPatientsPage extends StatefulWidget {
   const AllPatientsPage({super.key});
@@ -147,7 +147,7 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
             ],
           ),
           const SizedBox(height: 10),
-          if (graphData != null)
+          if (graphData != null && graphData is Map<String, dynamic> && graphData.isNotEmpty)
             PatientGraph(graphData: graphData)
           else
             const Text("No health data available",

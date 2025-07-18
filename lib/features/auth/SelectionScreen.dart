@@ -1,7 +1,7 @@
-import 'package:dhadkan_front/Custom/CustomElevatedButton.dart';
-import 'package:dhadkan_front/features/auth/DoctorSignUpScreen.dart';
-import 'package:dhadkan_front/features/auth/PatientSignUpScreen.dart';
-import 'package:dhadkan_front/features/common/TopBar.dart';
+import 'package:dhadkan/Custom/CustomElevatedButton.dart';
+import 'package:dhadkan/features/auth/DoctorSignUpScreen.dart';
+import 'package:dhadkan/features/auth/PatientSignUpScreen.dart';
+import 'package:dhadkan/features/common/TopBar.dart';
 import 'package:flutter/material.dart';
 
 class SelectionScreen extends StatelessWidget {

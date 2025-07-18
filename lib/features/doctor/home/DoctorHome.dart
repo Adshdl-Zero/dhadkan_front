@@ -1,15 +1,13 @@
-import 'package:dhadkan_front/features/auth/LandingScreen.dart';
-import 'package:dhadkan_front/features/common/TopBar.dart';
-import 'package:dhadkan_front/features/doctor/home/Heading.dart';
-import 'package:dhadkan_front/utils/storage/secure_storage_service.dart';
+import 'package:dhadkan/features/auth/LandingScreen.dart';
+import 'package:dhadkan/features/common/TopBar.dart';
+import 'package:dhadkan/features/doctor/home/Heading.dart';
+import 'package:dhadkan/utils/http/http_client.dart';
+import 'package:dhadkan/utils/storage/secure_storage_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../utils/device/device_utility.dart';
 import 'DoctorButtons.dart';
-import 'Heading.dart';
-// import 'Histogram.dart';
-// import 'DoctorPie.dart';
 
 class DoctorHome extends StatefulWidget {
   const DoctorHome({super.key});
@@ -18,17 +16,67 @@ class DoctorHome extends StatefulWidget {
   State<DoctorHome> createState() => _DoctorHomeState();
 }
 
-Future<void> _logout(BuildContext context) async {
-  await SecureStorageService.deleteData('authToken');
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(builder: (context) => const LandingScreen()),
-    (Route<dynamic> route) => false,
-  );
-}
-
-
 class _DoctorHomeState extends State<DoctorHome> {
+  @override
+  void initState() {
+    super.initState();
+    _validateTokenInBackground();
+  }
+
+  Future<void> _validateTokenInBackground() async {
+    String? token = await SecureStorageService.getData('authToken');
+    if (token != null) {
+      bool isValid = await _validateToken(token);
+      if (!isValid && mounted) {
+        _showSessionExpiredDialog();
+      }
+    } else {
+      // No token found, force logout
+      _forceLogout();
+    }
+  }
+
+  Future<bool> _validateToken(String token) async {
+    try {
+      final response = await MyHttpHelper.private_post('/patient/validate-token', {}, token);
+      return response['status'] == 'valid';
+    } catch (e) {
+      print("Error validating token: $e");
+      // You can decide: consider invalid, or allow offline mode
+      return false;
+    }
+  }
+
+  void _showSessionExpiredDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text("Session Expired"),
+        content: const Text("Your session has expired. Please log in again."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              _forceLogout();
+            },
+            child: const Text("OK"),
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> _forceLogout() async {
+    await SecureStorageService.deleteData('authToken');
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LandingScreen()),
+          (Route<dynamic> route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MyDeviceUtils.getScreenWidth(context);
@@ -40,14 +88,12 @@ class _DoctorHomeState extends State<DoctorHome> {
         actions: [
           IconButton(
             onPressed: () {
-              _logout(context);
+              _forceLogout();
             },
             icon: const Icon(Icons.logout),
           ),
         ],
       ),
-
-      
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: paddingWidth),
         child: const SingleChildScrollView(
@@ -59,9 +105,7 @@ class _DoctorHomeState extends State<DoctorHome> {
               DoctorButtons(),
               SizedBox(height: 15),
               // DoctorHistogram(),
-              // SizedBox(height: 15),
               // DoctorPie(),
-              // SizedBox(height: 15)
             ],
           ),
         ),

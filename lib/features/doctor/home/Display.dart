@@ -1,4 +1,4 @@
-import 'package:dhadkan_front/utils/theme/text_theme.dart';
+import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
 
 class Display extends StatelessWidget {

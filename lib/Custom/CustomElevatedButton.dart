@@ -1,4 +1,4 @@
-import 'package:dhadkan_front/utils/constants/colors.dart';
+import 'package:dhadkan/utils/constants/colors.dart';
 import 'package:flutter/material.dart';
 
 class CustomElevatedButton extends StatelessWidget {

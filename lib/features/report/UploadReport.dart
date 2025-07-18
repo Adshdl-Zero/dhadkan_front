@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:dhadkan_front/utils/theme/text_theme.dart';
-import 'package:dhadkan_front/utils/theme/theme.dart';
-import 'package:dhadkan_front/utils/constants/colors.dart';
-import 'package:dhadkan_front/utils/http/http_client.dart';
+import 'package:dhadkan/utils/theme/text_theme.dart';
+import 'package:dhadkan/utils/theme/theme.dart';
+import 'package:dhadkan/utils/constants/colors.dart';
+import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dhadkan_front/utils/storage/secure_storage_service.dart';
+import 'package:dhadkan/utils/storage/secure_storage_service.dart';
 
 class UploadReportPage extends StatefulWidget {
   final String patientId;
@@ -38,20 +38,15 @@ class _UploadReportPageState extends State<UploadReportPage> {
     'biochemistry_report': 'Biochemistry Report',
   };
 
-  bool _isUploading = false;
+  bool _isButtonLocked = false; // New state variable to lock button
 
   Future<String?> _getAuthToken() async {
     try {
       String? token = await SecureStorageService.getData('authToken');
-      print('Retrieved token: ${token != null ? "Token exists (${token
-          .length} chars)" : "No token found"}');
-
-      // Additional debug: check if token starts with expected format
+      print('Retrieved token: ${token != null ? "Token exists (${token.length} chars)" : "No token found"}');
       if (token != null) {
-        print('Token starts with: ${token.substring(
-            0, token.length > 20 ? 20 : token.length)}...');
+        print('Token starts with: ${token.substring(0, token.length > 20 ? 20 : token.length)}...');
       }
-
       return token;
     } catch (e) {
       print('Error retrieving auth token: $e');
@@ -59,11 +54,8 @@ class _UploadReportPageState extends State<UploadReportPage> {
     }
   }
 
-  // Debug function to validate token
   Future<bool> _validateToken(String token) async {
     try {
-      // You can add a simple API call to validate the token
-      // For now, just check if it's not empty and has reasonable length
       return token.isNotEmpty && token.length > 10;
     } catch (e) {
       print('Token validation error: $e');
@@ -92,31 +84,28 @@ class _UploadReportPageState extends State<UploadReportPage> {
   }
 
   Future<void> _uploadFiles() async {
+    if (_isButtonLocked) return; // Prevent further clicks
+
     setState(() {
-      _isUploading = true;
+      _isButtonLocked = true; // Lock the button
     });
 
     try {
-      // Enhanced token retrieval and validation
       final authToken = await _getAuthToken();
       if (authToken == null) {
         throw Exception('No authentication token found');
       }
 
-      // Validate token before proceeding
       bool isValidToken = await _validateToken(authToken);
       if (!isValidToken) {
         throw Exception('Invalid authentication token');
       }
 
-      // Convert Map<String, File?> to Map<String, List<File>> for compatibility
       final Map<String, List<File>> filesToUpload = {};
       _selectedFiles.forEach((key, file) {
         if (file != null) {
           filesToUpload[key] = [file];
-          print('Adding file for upload - $key: ${file.path
-              .split('/')
-              .last}');
+          print('Adding file for upload - $key: ${file.path.split('/').last}');
         }
       });
 
@@ -125,12 +114,14 @@ class _UploadReportPageState extends State<UploadReportPage> {
           SnackBar(
             content: Text(
               'Please select at least one file to upload',
-              style: MyTextTheme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white),
+              style: MyTextTheme.textTheme.bodyMedium?.copyWith(color: Colors.white),
             ),
             backgroundColor: Colors.orange,
           ),
         );
+        setState(() {
+          _isButtonLocked = false; // Unlock on error
+        });
         return;
       }
 
@@ -147,69 +138,60 @@ class _UploadReportPageState extends State<UploadReportPage> {
 
       print('Upload response: $response');
 
-      // Check for different response formats
-      if (response['statusCode'] == 201 ||
-          response['success'] == true ||
-          (response.containsKey('success') && response['success'])) {
+      if (response['statusCode'] == 201 || response['success'] == true || (response.containsKey('success') && response['success'])) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               'Files uploaded successfully',
-              style: MyTextTheme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white),
+              style: MyTextTheme.textTheme.bodyMedium?.copyWith(color: Colors.white),
             ),
             backgroundColor: MyColors.primary,
           ),
         );
         Navigator.pop(context, true);
       } else if (response['statusCode'] == 401) {
-        // Handle 401 specifically
         print('Authentication failed - 401 error');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               'Authentication failed. Please login again.',
-              style: MyTextTheme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white),
+              style: MyTextTheme.textTheme.bodyMedium?.copyWith(color: Colors.white),
             ),
             backgroundColor: Colors.red,
           ),
         );
-
-        // Optionally clear the token and navigate to login
         await SecureStorageService.deleteData('authToken');
-        // Navigator.pushReplacementNamed(context, '/login');
-
+        setState(() {
+          _isButtonLocked = false; // Unlock on error
+        });
       } else {
-        // Handle other errors
         if (response['errors'] != null) {
           for (var error in (response['errors'] as List)) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
                   error.toString(),
-                  style: MyTextTheme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white),
+                  style: MyTextTheme.textTheme.bodyMedium?.copyWith(color: Colors.white),
                 ),
                 backgroundColor: Colors.red,
               ),
             );
           }
         } else {
-          String errorMessage = response['error'] ??
-              response['message'] ??
-              'Unknown error occurred';
+          String errorMessage = response['error'] ?? response['message'] ?? 'Unknown error occurred';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 'Upload failed: $errorMessage',
-                style: MyTextTheme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white),
+                style: MyTextTheme.textTheme.bodyMedium?.copyWith(color: Colors.white),
               ),
               backgroundColor: Colors.red,
             ),
           );
         }
+        setState(() {
+          _isButtonLocked = false; // Unlock on error
+        });
       }
     } catch (e) {
       print('Upload error: $e');
@@ -217,15 +199,13 @@ class _UploadReportPageState extends State<UploadReportPage> {
         SnackBar(
           content: Text(
             'Failed to upload files: $e',
-            style: MyTextTheme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white),
+            style: MyTextTheme.textTheme.bodyMedium?.copyWith(color: Colors.white),
           ),
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
       setState(() {
-        _isUploading = false;
+        _isButtonLocked = false; // Unlock on error
       });
     }
   }
@@ -233,14 +213,12 @@ class _UploadReportPageState extends State<UploadReportPage> {
   @override
   void initState() {
     super.initState();
-    // Debug: Check token on page load
     _checkTokenOnLoad();
   }
 
   Future<void> _checkTokenOnLoad() async {
     final token = await _getAuthToken();
-    print(
-        'Token check on page load: ${token != null ? "Available" : "Missing"}');
+    print('Token check on page load: ${token != null ? "Available" : "Missing"}');
   }
 
   @override
@@ -254,50 +232,27 @@ class _UploadReportPageState extends State<UploadReportPage> {
             color: Colors.white,
           ),
         ),
-        // actions: [
-        //   // Debug button to check token
-        //   IconButton(
-        //     icon: Icon(Icons.info),
-        //     onPressed: () async {
-        //       final token = await _getAuthToken();
-        //       showDialog(
-        //         context: context,
-        //         builder: (context) => AlertDialog(
-        //           title: Text('Debug Info'),
-        //           content: Text('Token: ${token != null ? "Available" : "Missing"}\nPatient ID: ${widget.patientId}'),
-        //           actions: [
-        //             TextButton(
-        //               onPressed: () => Navigator.pop(context),
-        //               child: Text('OK'),
-        //             ),
-        //           ],
-        //         ),
-        //       );
-        //     },
-        //   ),
-        //],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ..._selectedFiles.keys.map((field) =>
-                _buildFileUploadSection(
-                  _fieldLabels[field]!,
-                  field,
-                  _selectedFiles[field],
-                )),
+            ..._selectedFiles.keys.map((field) => _buildFileUploadSection(
+              _fieldLabels[field]!,
+              field,
+              _selectedFiles[field],
+            )),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: _isUploading ? null : _uploadFiles,
+              onPressed: _isButtonLocked ? null : _uploadFiles, // Disable button if locked
               style: ElevatedButton.styleFrom(
                 backgroundColor: MyColors.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: _isUploading
+              child: _isButtonLocked
                   ? const CircularProgressIndicator()
                   : Text(
                 'Submit Reports',
@@ -316,7 +271,7 @@ class _UploadReportPageState extends State<UploadReportPage> {
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0, // Remove shadow
+      elevation: 0,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
         child: Column(

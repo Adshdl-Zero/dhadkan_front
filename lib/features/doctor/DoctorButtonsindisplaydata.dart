@@ -1,7 +1,7 @@
-import 'package:dhadkan_front/features/doctor/home/DoctorButton.dart';
-import 'package:dhadkan_front/utils/device/device_utility.dart';
+import 'package:dhadkan/features/doctor/home/DoctorButton.dart';
+import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:flutter/material.dart';
-import 'package:dhadkan_front/features/report/Report.dart';
+import 'package:dhadkan/features/report/Report.dart';
 
 class DoctorButtonsindisplaydata extends StatelessWidget {
   final String patientMobile;
@@ -62,7 +62,7 @@ class DoctorButtonsindisplaydata extends StatelessWidget {
           ),
           const SizedBox(width: 25),
           Doctorbutton(
-            title: "Chat",
+            title: "Notify",
             handleClick: handleChatPress,
           ),
         ],

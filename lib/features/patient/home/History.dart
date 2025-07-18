@@ -1,29 +1,30 @@
-import 'package:dhadkan_front/utils/theme/text_theme.dart';
-import 'package:dhadkan_front/utils/constants/colors.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:dhadkan_front/features/patient/home/PatientHomeScreen.dart';
+import 'package:dhadkan/features/patient/home/PatientHomeScreen.dart';
+import 'package:dhadkan/features/patient/addData/AddDataScreen.dart';
 
-class History extends StatefulWidget {
+class History extends StatelessWidget {
   final List<PatientDrugRecord> history;
   final String Function(String?) formatDate;
   final String Function(String?) formatTime;
+  final Future<void> Function(String recordId) onDeleteRecord;
+  // final String patientMobile;
+  // final String patientName;
+  // final String patientId;
 
   const History({
     super.key,
     required this.history,
     required this.formatDate,
     required this.formatTime,
+    required this.onDeleteRecord,
+    // required this.patientMobile,
+    // required this.patientName,
+    // required this.patientId,
   });
 
   @override
-  State<History> createState() => _HistoryState();
-}
-
-class _HistoryState extends State<History> {
-  @override
   Widget build(BuildContext context) {
-    if (widget.history.isEmpty) {
+    if (history.isEmpty) {
       return Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -41,12 +42,12 @@ class _HistoryState extends State<History> {
 
     return Column(
       children: [
-        ...widget.history.map((record) => _buildHistoryCard(record)),
+        ...history.map((record) => _buildHistoryCard(record, context)),
       ],
     );
   }
 
-  Widget _buildHistoryCard(PatientDrugRecord record) {
+  Widget _buildHistoryCard(PatientDrugRecord record, BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -55,24 +56,73 @@ class _HistoryState extends State<History> {
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            _buildRecordHeader(record),
-            const SizedBox(height: 16),
-            _buildPatientInfo(record), // This now includes diagnosis if it exists
-            if (record.medicines != null && record.medicines!.isNotEmpty)
-              _buildMedicinesSection(record.medicines!),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildRecordHeader(record),
+                const SizedBox(height: 10),
+                _buildPatientInfo(record),
+                if (record.medicines != null && record.medicines!.isNotEmpty)
+                  _buildMedicinesSection(record.medicines!, context),
+              ],
+            ),
+            Positioned(
+              top: -8,
+              right: -8,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Color(0xFF2196F3)),
+                    onPressed: () {
+                      if (record.id != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddData(
+                              record: record,
+                              recordId: record.id!,
+                            ),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Error: Record ID is missing.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Color(0xFFFF5A5A)),
+                    onPressed: () {
+                      if (record.id != null) {
+                        onDeleteRecord(record.id!);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Error: Record ID is missing.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-
   Widget _buildRecordHeader(PatientDrugRecord record) {
-    String dateStr = widget.formatDate(record.createdAt);
-    String timeStr = widget.formatTime(record.createdAt);
+    String dateStr = formatDate(record.createdAt);
+    String timeStr = formatTime(record.createdAt);
 
     return Center(
       child: Column(
@@ -88,9 +138,8 @@ class _HistoryState extends State<History> {
           Text(
             timeStr,
             style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
+                fontSize: 12,
+                color: Colors.grey),
           ),
         ],
       ),
@@ -101,52 +150,42 @@ class _HistoryState extends State<History> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // First row: Status + Weight
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildInfoRow('Status', record.status ?? 'Better'),
-            _buildInfoRow('Weight', record.weight?.toString() ?? 'N/A'),
+            _buildInfoRow('Weight', record.weight?.toString() ?? ''),
           ],
         ),
-
-        // Second row: Can walk + SBP
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildInfoRow('Can walk for 5 min', record.canWalk ?? 'YES'),
-            _buildInfoRow('SBP', record.sbp?.toString() ?? 'N/A'),
+            _buildInfoRow('SBP', record.sbp?.toString() ?? ''),
           ],
         ),
-
-        // Third row: Can climb + DBP
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildInfoRow('Can climb stairs', record.canClimb ?? 'YES'),
-            _buildInfoRow('DBP', record.dbp?.toString() ?? 'N/A'),
+            _buildInfoRow('DBP', record.dbp?.toString() ?? ''),
           ],
         ),
-
-        // Diagnosis with reduced spacing
-        if (record.diagnosis != null) ...[
-          const SizedBox(height: 4),
-          _buildInfoRow(
-              'Diagnosis',
-              (record.diagnosis == 'Other' ? record.otherDiagnosis : record.diagnosis) ?? 'N/A'
-          ),
-        ],
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(width: 1),
+            _buildInfoRow('HR', record.hr?.toString() ?? ''),
+          ],
+        ),
+        _buildInfoRow(
+            'Diagnosis',
+            (record.diagnosis == 'Other' ? record.otherDiagnosis : record.diagnosis) ?? 'N/A'),
       ],
-    );
-  }
-
-  Widget _buildDiagnosisInfo(PatientDrugRecord record) {
-    return _buildInfoRow(
-        'Diagnosis',
-        (record.diagnosis == 'Other' ? record.otherDiagnosis : record.diagnosis) ?? 'N/A'
     );
   }
 
@@ -168,11 +207,58 @@ class _HistoryState extends State<History> {
     );
   }
 
-  Widget _buildMedicinesSection(List<Medicine> medicines) {
+  Widget _buildMedicinesSection(List<Medicine> medicines, BuildContext context) {
+    // Group medicines by medClass
+    final Map<String, List<Medicine>> groupedMedicines = {
+      'A': [],
+      'B': [],
+      'C': [],
+      'D': [],
+      'Other': [], // Add fallback category
+    };
+
+    // Categorize medicines by medClass
+    for (var medicine in medicines) {
+      final medClass = medicine.medClass ?? 'Other'; // Default to 'Other' if null
+      groupedMedicines[medClass] ??= []; // Initialize list if key doesn't exist
+      groupedMedicines[medClass]!.add(medicine);
+    }
+
+    // Sort medicines within each class by name
+    groupedMedicines.forEach((key, value) {
+      value.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
+    });
+
+    // Build UI for each class
+    List<Widget> classSections = [];
+    groupedMedicines.forEach((medClass, meds) {
+      if (meds.isNotEmpty) {
+        classSections.add(
+          Padding(
+            padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
+            child: Text(
+              'Medicine $medClass :',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        );
+        classSections.addAll(
+          meds.asMap().entries.map((entry) {
+            final medicine = entry.value;
+            return _buildCollapsibleMedicineItem(medicine, medClass, context);
+          }).toList(),
+        );
+      }
+    });
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
         const Center(
           child: Text(
             'Medicines',
@@ -183,68 +269,113 @@ class _HistoryState extends State<History> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        ...medicines
-            .asMap()
-            .entries
-            .map((entry) {
-          int index = entry.key;
-          Medicine medicine = entry.value;
-          String label = String.fromCharCode('A'.codeUnitAt(0) + (index % 26));
-
-          return _buildCollapsibleMedicineItem(medicine, label);
-        }),
+        const SizedBox(height: 8),
+        ...classSections,
       ],
     );
   }
 
-  Widget _buildCollapsibleMedicineItem(Medicine medicine, String label) {
+  Widget _buildCollapsibleMedicineItem(Medicine medicine, String label, BuildContext context) {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         title: Text(
-          'Medicine $label: ${medicine.name ?? 'N/A'}',
+          '${medicine.name ?? 'N/A'}',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
             color: Colors.black,
           ),
         ),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 0),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
-        childrenPadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 2.0, vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(color: Colors.black),
+                      children: [
+                        const TextSpan(
+                          text: 'Format: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: '${medicine.format ?? 'N/A'}'),
+                      ],
+                    ),
+                  ),
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(color: Colors.black),
+                      children: [
+                        const TextSpan(
+                          text: 'Dosage: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: '${medicine.dosage ?? 'N/A'} mg'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(color: Colors.black),
                   children: [
-                    Text(
-                      'Format: ${medicine.format ?? 'N/A'}',
-                      style: const TextStyle(color: Colors.black),
+                    const TextSpan(
+                      text: 'Frequency: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Text(
-                      'Dosage: ${medicine.dosage ?? 'N/A'} mg',
-                      style: const TextStyle(color: Colors.black),
-                    ),
+                    TextSpan(text: '${medicine.frequency ?? 'N/A'}'),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Frequency: ${medicine.frequency ?? 'N/A'}',
+              ),
+              const SizedBox(height: 2),
+              RichText(
+                text: TextSpan(
                   style: const TextStyle(color: Colors.black),
+                  children: [
+                    const TextSpan(
+                      text: 'Timing: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(text: '${medicine.medicineTiming ?? 'N/A'}'),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Company name: ${medicine.companyName ?? 'N/A'}',
+              ),
+              const SizedBox(height: 2),
+              RichText(
+                text: TextSpan(
                   style: const TextStyle(color: Colors.black),
+                  children: [
+                    const TextSpan(
+                      text: 'Generic: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(text: '${medicine.generic ?? 'N/A'}'),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 2),
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(color: Colors.black),
+                  children: [
+                    const TextSpan(
+                      text: 'Company name: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(text: '${medicine.companyName ?? 'N/A'}'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

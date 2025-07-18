@@ -1,7 +1,7 @@
-import 'package:dhadkan_front/features/chat/ConversationScreen.dart';
-import 'package:dhadkan_front/features/patient/home/PatientButton.dart';
-import 'package:dhadkan_front/utils/device/device_utility.dart';
-import 'package:dhadkan_front/utils/theme/text_theme.dart';
+import 'package:dhadkan/features/chat/ConversationScreen.dart';
+import 'package:dhadkan/features/patient/home/PatientButton.dart';
+import 'package:dhadkan/utils/device/device_utility.dart';
+import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -52,7 +52,7 @@ class PatientButtons extends StatelessWidget {
           const SizedBox(
             width: 20,
           ),
-          PatientButton(title: "Chat", 
+          PatientButton(title: "Notification",
           handleClick: handleChatPress,
           // handleChatButtonPress
           ),

@@ -1,4 +1,4 @@
-import 'package:dhadkan_front/app.dart';
+import 'package:dhadkan/app.dart';
 import 'package:flutter/material.dart';
 
 void main() {

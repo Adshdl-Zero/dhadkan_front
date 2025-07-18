@@ -1,7 +1,7 @@
-import 'package:dhadkan_front/features/doctor/home/Display.dart';
-import 'package:dhadkan_front/utils/device/device_utility.dart';
-import 'package:dhadkan_front/utils/http/http_client.dart';
-import 'package:dhadkan_front/utils/storage/secure_storage_service.dart';
+import 'package:dhadkan/features/doctor/home/Display.dart';
+import 'package:dhadkan/utils/device/device_utility.dart';
+import 'package:dhadkan/utils/http/http_client.dart';
+import 'package:dhadkan/utils/storage/secure_storage_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
