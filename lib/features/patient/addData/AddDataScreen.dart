@@ -1,11 +1,8 @@
 import 'package:dhadkan/Custom/CustomElevatedButton.dart';
 import 'package:dhadkan/features/common/TopBar.dart';
-import 'package:dhadkan/features/patient/home/History.dart';
-import 'package:dhadkan/utils/constants/colors.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
-import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:dropdown_search/dropdown_search.dart';
@@ -96,13 +93,29 @@ class _AddDataState extends State<AddData> {
   bool isListening = false;
   TextEditingController? currentListeningController;
   bool _isButtonLocked = false;
+  Map<String, List<String>> _medicineCategories = {}; // New state variable for medicine categories
 
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
     _initialize();
+    _fetchMedicineCategories(); // Fetch medicine categories once
     _autofillData();
+  }
+
+  Future<void> _fetchMedicineCategories() async {
+    try {
+      final categories = await MedicineData.getMedicineCategories();
+      if (mounted) {
+        setState(() {
+          _medicineCategories = categories;
+        });
+      }
+    } catch (e) {
+      print("Error fetching medicine categories: $e");
+      // Handle error, e.g., show a snackbar
+    }
   }
 
   void _autofillData() {
@@ -619,6 +632,62 @@ class _AddDataState extends State<AddData> {
     );
   }
 
+  /// Shows a dialog to add a new medicine.
+  Future<void> _showAddMedicineDialog(BuildContext context, String drugClass) async {
+    final TextEditingController newMedicineController = TextEditingController();
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap a button to close.
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add New Medicine to Class $drugClass'),
+          content: TextField(
+            controller: newMedicineController,
+            decoration: const InputDecoration(hintText: "Enter Medicine Name"),
+            autofocus: true,
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () async {
+                final String newMedicineName = newMedicineController.text.trim();
+                if (newMedicineName.isNotEmpty) {
+                  final success = await MedicineData.addMedicine(newMedicineName, drugClass);
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                    if (success) {
+                      await _fetchMedicineCategories(); // Re-fetch categories after adding a new one
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('"$newMedicineName" added successfully.'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Failed to add medicine. It might already exist.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MyDeviceUtils.getScreenWidth(context);
@@ -1001,6 +1070,8 @@ class _AddDataState extends State<AddData> {
     required List<String> timingValues,
     required List<TextEditingController> otherTimingControllers,
   }) {
+    List<String> medicines = _medicineCategories[section] ?? []; // Use the state variable directly
+
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
@@ -1013,147 +1084,160 @@ class _AddDataState extends State<AddData> {
         ),
         tilePadding: EdgeInsets.zero,
         children: [
-          for (int i = 0; i < medicineControllers.length; i++) ...[
-            DropdownSearch<String>(
-              popupProps: PopupProps.menu(
-                showSearchBox: true,
-                searchFieldProps: TextFieldProps(
-                  decoration: InputDecoration(
-                    labelText: 'Search Medicine',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+          Column(
+            children: [
+              for (int i = 0; i < medicineControllers.length; i++) ...[
+                DropdownSearch<String>(
+                  popupProps: PopupProps.menu(
+                    showSearchBox: true,
+                    searchFieldProps: TextFieldProps(
+                      decoration: InputDecoration(
+                        labelText: 'Search Medicine',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close dropdown
+                            _showAddMedicineDialog(context, section);
+                          },
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              items: MedicineData.medicineCategories[section] ?? [],
-              dropdownDecoratorProps: DropDownDecoratorProps(
-                dropdownSearchDecoration: InputDecoration(
-                  labelText: 'Medicine Name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              onChanged: (String? value) {
-                if (value != null) {
-                  setState(() {
-                    medicineControllers[i].text = value;
-                  });
-                }
-              },
-              selectedItem: medicineControllers[i].text.isNotEmpty
-                  ? medicineControllers[i].text
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            _buildFormatDropdown(
-              label: 'Format',
-              value: formatValues[i],
-              onChanged: (value) {
-                setState(() {
-                  formatValues[i] = value!;
-                });
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildTextFormField(
-              label: 'Dosage',
-              controller: dosageControllers[i],
-              isNumeric: false,
-              enableSpeech: true,
-            ),
-            const SizedBox(height: 12),
-            _buildFrequencyDropdown(
-              label: 'Frequency',
-              value: frequencyValues[i],
-              onChanged: (value) {
-                setState(() {
-                  frequencyValues[i] = value!;
-                });
-              },
-            ),
-            if (frequencyValues[i] == 'Other')
-              Column(
-                children: [
-                  const SizedBox(height: 12),
-                  _buildTextFormField(
-                    label: 'Custom Frequency',
-                    controller: otherFrequencyControllers[i],
-                    isNumeric: false,
-                  ),
-                ],
-              ),
-            const SizedBox(height: 12),
-            _buildTimingDropdown(
-              label: 'Medicine Timing',
-              value: timingValues[i],
-              onChanged: (value) {
-                setState(() {
-                  timingValues[i] = value!;
-                });
-              },
-            ),
-            if (timingValues[i] == 'Other')
-              Column(
-                children: [
-                  const SizedBox(height: 12),
-                  _buildTextFormField(
-                    label: 'Custom Timing',
-                    controller: otherTimingControllers[i],
-                    isNumeric: false,
-                    enableSpeech: true,
-                  ),
-                ],
-              ),
-            const SizedBox(height: 12),
-            _buildTextFormField(
-              label: 'Generic',
-              controller: genericControllers[i],
-              isNumeric: false,
-            ),
-            const SizedBox(height: 12),
-            _buildTextFormField(
-              label: 'Company Name',
-              controller: companyNameControllers[i],
-              isNumeric: false,
-            ),
-            const SizedBox(height: 12),
-            if (i > 0 ||
-                (i == 0 &&
-                    (section == 'A' && medicineControllersA.length > 1 ||
-                    section == 'B' && medicineControllersB.length > 1 ||
-                    section == 'C' && medicineControllersC.length > 1 ||
-                    section == 'D' && medicineControllersD.length > 1)))
-              ElevatedButton(
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all(const Color(0xFFFF5A5A)),
-                  minimumSize: MaterialStateProperty.all(const Size(double.infinity, 40)),
-                  shape: MaterialStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                  items: medicines, // Use the pre-fetched list
+                  dropdownDecoratorProps: DropDownDecoratorProps(
+                    dropdownSearchDecoration: InputDecoration(
+                      labelText: 'Medicine Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
-                  textStyle: MaterialStateProperty.all(
-                    const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  foregroundColor: MaterialStateProperty.all(Colors.white),
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      setState(() {
+                        medicineControllers[i].text = value;
+                      });
+                    }
+                  },
+                  selectedItem: medicineControllers[i].text.isNotEmpty
+                      ? medicineControllers[i].text
+                      : null,
                 ),
-                onPressed: () => _removeMedicineFields(section, i),
-                child: const Text("Remove"),
+                const SizedBox(height: 12),
+                _buildFormatDropdown(
+                  label: 'Format',
+                  value: formatValues[i],
+                  onChanged: (value) {
+                    setState(() {
+                      formatValues[i] = value!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildTextFormField(
+                  label: 'Dosage',
+                  controller: dosageControllers[i],
+                  isNumeric: false,
+                  enableSpeech: true,
+                ),
+                const SizedBox(height: 12),
+                _buildFrequencyDropdown(
+                  label: 'Frequency',
+                  value: frequencyValues[i],
+                  onChanged: (value) {
+                    setState(() {
+                      frequencyValues[i] = value!;
+                    });
+                  },
+                ),
+                if (frequencyValues[i] == 'Other')
+                  Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      _buildTextFormField(
+                        label: 'Custom Frequency',
+                        controller: otherFrequencyControllers[i],
+                        isNumeric: false,
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 12),
+                _buildTimingDropdown(
+                  label: 'Medicine Timing',
+                  value: timingValues[i],
+                  onChanged: (value) {
+                    setState(() {
+                      timingValues[i] = value!;
+                    });
+                  },
+                ),
+                if (timingValues[i] == 'Other')
+                  Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      _buildTextFormField(
+                        label: 'Custom Timing',
+                        controller: otherTimingControllers[i],
+                        isNumeric: false,
+                        enableSpeech: true,
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 12),
+                _buildTextFormField(
+                  label: 'Generic',
+                  controller: genericControllers[i],
+                  isNumeric: false,
+                ),
+                const SizedBox(height: 12),
+                _buildTextFormField(
+                  label: 'Company Name',
+                  controller: companyNameControllers[i],
+                  isNumeric: false,
+                ),
+                const SizedBox(height: 12),
+                if (i > 0 ||
+                    (i == 0 &&
+                        (section == 'A' && medicineControllersA.length > 1 ||
+                            section == 'B' && medicineControllersB.length > 1 ||
+                            section == 'C' && medicineControllersC.length > 1 ||
+                            section == 'D' && medicineControllersD.length > 1)))
+                  ElevatedButton(
+                    style: ButtonStyle(
+                      backgroundColor:
+                      MaterialStateProperty.all(const Color(0xFFFF5A5A)),
+                      minimumSize:
+                      MaterialStateProperty.all(const Size(double.infinity, 40)),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      textStyle: MaterialStateProperty.all(
+                        const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      foregroundColor: MaterialStateProperty.all(Colors.white),
+                    ),
+                    onPressed: () => _removeMedicineFields(section, i),
+                    child: const Text("Remove"),
+                  ),
+                const SizedBox(height: 12),
+              ],
+              const SizedBox(height: 10),
+              CustomElevatedButton(
+                text: "Add More Medicine",
+                height: 40,
+                onPressed: () => _addNewMedicineFields(section),
               ),
-            const SizedBox(height: 12),
-          ],
-          const SizedBox(height: 10),
-          CustomElevatedButton(
-            text: "Add More Medicine",
-            height: 40,
-            onPressed: () => _addNewMedicineFields(section),
+              const SizedBox(height: 10),
+            ],
           ),
-          const SizedBox(height: 10),
         ],
       ),
     );

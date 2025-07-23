@@ -8,8 +8,8 @@ import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:dhadkan/features/doctor/home/PatientDrugDataScreen.dart';
-import 'package:dropdown_search/dropdown_search.dart'; // Import for DropdownSearch
-import 'package:dhadkan/features/common/medicine_data.dart'; // Import MedicineData
+import 'package:dropdown_search/dropdown_search.dart';
+import 'package:dhadkan/features/common/medicine_data.dart';
 
 class AddDrugPage extends StatefulWidget {
   final String patientMobile;
@@ -86,7 +86,13 @@ class _AddDrugPageState extends State<AddDrugPage> {
   final List<TextEditingController> otherTimingControllersD = [];
 
   // Options
-  final List<String> frequencyOptions = ['Once a day', 'Twice a day', 'Thrice a day', 'Four times a day', 'Other'];
+  final List<String> frequencyOptions = [
+    'Once a day',
+    'Twice a day',
+    'Thrice a day',
+    'Four times a day',
+    'Other'
+  ];
   final List<String> timingOptions = ['Morning', 'HS', 'Other'];
   final List<String> formatOptions = ['Tablet', 'Syrup'];
   final List<String> statusOptions = ['Same', 'Better', 'Worse'];
@@ -97,6 +103,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
   bool isListening = false;
   TextEditingController? currentListeningController;
   bool _isButtonLocked = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -104,6 +111,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
     _speech = stt.SpeechToText();
     _initialize();
     _autofillData();
+    MedicineData.getMedicineCategories();
   }
 
   void _autofillData() {
@@ -122,29 +130,25 @@ class _AddDrugPageState extends State<AddDrugPage> {
         canWalkValue = record.canWalk;
         canClimbValue = record.canClimb;
 
-        _clearMedicineControllers(); // Clear existing controllers before populating
+        _clearMedicineControllers();
 
         record.medicines?.forEach((medicine) {
           final section = medicine.medClass;
           if (section != null) {
             String currentTiming = medicine.medicineTiming ?? 'Morning';
             String otherTimingText = '';
-            // If the timing from record is not in options, it's a custom one.
             if (!timingOptions.contains(currentTiming) && currentTiming.isNotEmpty) {
               otherTimingText = currentTiming;
-              currentTiming = 'Other'; // Set the dropdown to 'Other'
+              currentTiming = 'Other';
             } else if (currentTiming.isEmpty) {
               currentTiming = 'Morning';
             }
 
             String currentFrequency = medicine.frequency ?? 'Once a day';
             String otherFrequencyText = '';
-            // If the frequency from record is not in options, it's a custom one.
-            // This also handles cases where medicine.frequency itself contains the custom text
-            // and the 'customFrequency' field might not be explicitly present on the Medicine object.
             if (!frequencyOptions.contains(currentFrequency) && currentFrequency.isNotEmpty) {
               otherFrequencyText = currentFrequency;
-              currentFrequency = 'Other'; // Set the dropdown to 'Other'
+              currentFrequency = 'Other';
             } else if (currentFrequency.isEmpty) {
               currentFrequency = 'Once a day';
             }
@@ -155,7 +159,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
               medicine.format ?? 'Tablet',
               medicine.dosage ?? '',
               currentFrequency,
-              otherFrequencyText, // Now correctly populated from currentFrequency if custom
+              otherFrequencyText,
               currentTiming,
               otherTimingText,
               medicine.generic ?? '',
@@ -292,9 +296,9 @@ class _AddDrugPageState extends State<AddDrugPage> {
 
   void startListening(TextEditingController controller) async {
     if (!await _speech.initialize(
-      onStatus: (status) => print("Status: $status"),
+      onStatus: (status) => print("Speech Status: $status"),
       onError: (error) {
-        print("Error: $error");
+        print("Speech Error: $error");
         _showErrorSnackbar(context, 'Speech recognition error: ${error.errorMsg}');
       },
     )) {
@@ -337,6 +341,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     diagnosisController.dispose();
     otherDiagnosisController.dispose();
     weightController.dispose();
@@ -576,7 +581,9 @@ class _AddDrugPageState extends State<AddDrugPage> {
           _isButtonLocked = false;
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('Submit error: $e');
+      print('Stack trace: $stackTrace');
       _showErrorSnackbar(context, 'Error: ${e.toString()}');
       setState(() {
         _isButtonLocked = false;
@@ -601,15 +608,11 @@ class _AddDrugPageState extends State<AddDrugPage> {
         'class': medicineClass,
         'format': formats[i],
         'dosage': dosages[i].text,
-        'frequency': frequencies[i],
+        'frequency': frequencies[i] == 'Other' ? customFrequencies[i].text : frequencies[i],
         'generic': generics[i].text,
         'company_name': companies[i].text,
         'medicineTiming': timings[i] == 'Other' ? customTimings[i].text : timings[i],
       };
-
-      if (frequencies[i] == 'Other' && customFrequencies[i].text.isNotEmpty) {
-        medicine['customFrequency'] = customFrequencies[i].text;
-      }
       return medicine;
     });
   }
@@ -623,158 +626,70 @@ class _AddDrugPageState extends State<AddDrugPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    double screenWidth = MyDeviceUtils.getScreenWidth(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: TopBar(title: widget.record != null ? 'Edit Data' : 'Add Data'),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              _buildDiagnosisDropdown(
-                label: 'Diagnosis',
-                value: diagnosisValue,
-                onChanged: (value) {
-                  setState(() {
-                    diagnosisValue = value;
-                  });
-                },
-              ),
-              if (diagnosisValue == 'Other')
-                Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    _buildTextFormField(
-                      label: 'Specify Diagnosis',
-                      controller: otherDiagnosisController,
-                      isNumeric: false,
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 20),
-              _buildTextFormField(
-                  label: 'Weight', controller: weightController, isNumeric: true),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextFormField(
-                        label: 'SBP', controller: sbpController, isNumeric: true),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildTextFormField(
-                        label: 'DBP', controller: dbpController, isNumeric: true),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildTextFormField(
-                        label: 'HR', controller: hrController, isNumeric: true),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _buildStatusDropdown(
-                label: 'Status',
-                value: statusValue,
-                onChanged: (value) {
-                  setState(() {
-                    statusValue = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildYesNoDropdown(
-                label: 'Can Walk For 5 Min',
-                value: canWalkValue,
-                onChanged: (value) {
-                  setState(() {
-                    canWalkValue = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildYesNoDropdown(
-                label: 'Can Climb Stairs',
-                value: canClimbValue,
-                onChanged: (value) {
-                  setState(() {
-                    canClimbValue = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildCollapsibleMedicineSection(
-                medicineLabel: 'ACEi/ARBs/ARNIs/Isolazine',
-                section: 'A',
-                medicineControllers: medicineControllersA,
-                formatValues: formatValuesA,
-                dosageControllers: dosageControllersA,
-                frequencyValues: frequencyValuesA,
-                otherFrequencyControllers: otherFrequencyControllersA,
-                genericControllers: genericControllersA,
-                companyNameControllers: companyNameControllersA,
-                timingValues: timingValuesA,
-                otherTimingControllers: otherTimingControllersA,
-              ),
-              _buildCollapsibleMedicineSection(
-                medicineLabel: 'Beta blockers, Ivabradine',
-                section: 'B',
-                medicineControllers: medicineControllersB,
-                formatValues: formatValuesB,
-                dosageControllers: dosageControllersB,
-                frequencyValues: frequencyValuesB,
-                otherFrequencyControllers: otherFrequencyControllersB,
-                genericControllers: genericControllersB,
-                companyNameControllers: companyNameControllersB,
-                timingValues: timingValuesB,
-                otherTimingControllers: otherTimingControllersB,
-              ),
-              _buildCollapsibleMedicineSection(
-                medicineLabel: 'Complementary(SGLT-2 i, Blood thinner, STATINs, Fibrates, Bile acid sequestrants)',
-                section: 'C',
-                medicineControllers: medicineControllersC,
-                formatValues: formatValuesC,
-                dosageControllers: dosageControllersC,
-                frequencyValues: frequencyValuesC,
-                otherFrequencyControllers: otherFrequencyControllersC,
-                genericControllers: genericControllersC,
-                companyNameControllers: companyNameControllersC,
-                timingValues: timingValuesC,
-                otherTimingControllers: otherTimingControllersC,
-              ),
-              _buildCollapsibleMedicineSection(
-                medicineLabel: 'Diuretics',
-                section: 'D',
-                medicineControllers: medicineControllersD,
-                formatValues: formatValuesD,
-                dosageControllers: dosageControllersD,
-                frequencyValues: frequencyValuesD,
-                otherFrequencyControllers: otherFrequencyControllersD,
-                genericControllers: genericControllersD,
-                companyNameControllers: companyNameControllersD,
-                timingValues: timingValuesD,
-                otherTimingControllers: otherTimingControllersD,
-              ),
-              const SizedBox(height: 30),
-              CustomElevatedButton(
-                text: widget.record != null ? "Update Patient Data" : "Add Patient Data",
-                height: 40,
-                onPressed: _isButtonLocked ? () {} : () => handleSubmit(context),
-              ),
-              const SizedBox(height: 60),
-            ],
+  Future<void> _showAddMedicineDialog(BuildContext context, String drugClass) async {
+    final TextEditingController newMedicineController = TextEditingController();
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add New Medicine to Class $drugClass'),
+          content: TextField(
+            controller: newMedicineController,
+            decoration: const InputDecoration(hintText: "Enter Medicine Name"),
+            autofocus: true,
           ),
-        ),
-      ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () async {
+                final String newMedicineName = newMedicineController.text.trim();
+                if (newMedicineName.isNotEmpty) {
+                  final success = await MedicineData.addMedicine(newMedicineName, drugClass);
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                    if (success) {
+                      setState(() {});
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('"$newMedicineName" added successfully.'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Failed to add medicine. It might already exist.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
+  }
+
+  void _scrollToFocusedField(BuildContext context, FocusNode focusNode) {
+    if (focusNode.hasFocus) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        Scrollable.ensureVisible(
+          focusNode.context!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
   }
 
   Widget _buildTextFormField({
@@ -783,27 +698,32 @@ class _AddDrugPageState extends State<AddDrugPage> {
     bool isNumeric = false,
     bool enableSpeech = true,
   }) {
+    final FocusNode focusNode = FocusNode();
+    focusNode.addListener(() {
+      _scrollToFocusedField(context, focusNode);
+    });
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         suffixIcon: (!isNumeric && enableSpeech)
             ? IconButton(
-          icon: Icon(
-            Icons.mic,
-            color: (currentListeningController == controller && isListening)
-                ? Colors.red
-                : Colors.grey,
-          ),
-          onPressed: () {
-            if (isListening && currentListeningController == controller) {
-              stopListening();
-            } else {
-              startListening(controller);
-            }
-          },
-        )
+                icon: Icon(
+                  Icons.mic,
+                  color: (currentListeningController == controller && isListening)
+                      ? Colors.red
+                      : Colors.grey,
+                ),
+                onPressed: () {
+                  if (isListening && currentListeningController == controller) {
+                    stopListening();
+                  } else {
+                    startListening(controller);
+                  }
+                },
+              )
             : null,
       ),
       keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
@@ -992,177 +912,6 @@ class _AddDrugPageState extends State<AddDrugPage> {
     );
   }
 
-  Widget _buildCollapsibleMedicineSection({
-    required String medicineLabel,
-    required String section,
-    required List<TextEditingController> medicineControllers,
-    required List<String> formatValues,
-    required List<TextEditingController> dosageControllers,
-    required List<String> frequencyValues,
-    required List<TextEditingController> otherFrequencyControllers,
-    required List<TextEditingController> genericControllers,
-    required List<TextEditingController> companyNameControllers,
-    required List<String> timingValues,
-    required List<TextEditingController> otherTimingControllers,
-  }) {
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        title: Text(
-          medicineLabel,
-          style: const TextStyle(
-            fontWeight: FontWeight.normal,
-            fontSize: 16,
-          ),
-        ),
-        tilePadding: EdgeInsets.zero,
-        children: [
-          for (int i = 0; i < medicineControllers.length; i++) ...[
-            DropdownSearch<String>(
-              popupProps: PopupProps.menu(
-                showSearchBox: true,
-                searchFieldProps: TextFieldProps(
-                  decoration: InputDecoration(
-                    labelText: 'Search Medicine',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-              items: MedicineData.medicineCategories[section] ?? [],
-              dropdownDecoratorProps: DropDownDecoratorProps(
-                dropdownSearchDecoration: InputDecoration(
-                  labelText: 'Medicine Name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              onChanged: (String? value) {
-                if (value != null) {
-                  setState(() {
-                    medicineControllers[i].text = value;
-                  });
-                }
-              },
-              selectedItem: medicineControllers[i].text.isNotEmpty
-                  ? medicineControllers[i].text
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            _buildFormatDropdown(
-              label: 'Format',
-              value: formatValues[i],
-              onChanged: (value) {
-                setState(() {
-                  formatValues[i] = value!;
-                });
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildTextFormField(
-              label: 'Dosage',
-              controller: dosageControllers[i],
-              isNumeric: false,
-              enableSpeech: true,
-            ),
-            const SizedBox(height: 12),
-            _buildFrequencyDropdown(
-              label: 'Frequency',
-              value: frequencyValues[i],
-              onChanged: (value) {
-                setState(() {
-                  frequencyValues[i] = value!;
-                });
-              },
-            ),
-            if (frequencyValues[i] == 'Other')
-              Column(
-                children: [
-                  const SizedBox(height: 12),
-                  _buildTextFormField(
-                    label: 'Custom Frequency',
-                    controller: otherFrequencyControllers[i],
-                    isNumeric: false,
-                  ),
-                ],
-              ),
-            const SizedBox(height: 12),
-            _buildTimingDropdown(
-              label: 'Medicine Timing',
-              value: timingValues[i],
-              onChanged: (value) {
-                setState(() {
-                  timingValues[i] = value!;
-                });
-              },
-            ),
-            if (timingValues[i] == 'Other')
-              Column(
-                children: [
-                  const SizedBox(height: 12),
-                  _buildTextFormField(
-                    label: 'Custom Timing',
-                    controller: otherTimingControllers[i],
-                    isNumeric: false,
-                    enableSpeech: true,
-                  ),
-                ],
-              ),
-            const SizedBox(height: 12),
-            _buildTextFormField(
-              label: 'Generic',
-              controller: genericControllers[i],
-              isNumeric: false,
-            ),
-            const SizedBox(height: 12),
-            _buildTextFormField(
-              label: 'Company Name',
-              controller: companyNameControllers[i],
-              isNumeric: false,
-            ),
-            const SizedBox(height: 12),
-            if (i > 0 ||
-                (i == 0 &&
-                    (section == 'A' && medicineControllersA.length > 1 ||
-                        section == 'B' && medicineControllersB.length > 1 ||
-                        section == 'C' && medicineControllersC.length > 1 ||
-                        section == 'D' && medicineControllersD.length > 1)))
-              ElevatedButton(
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all(const Color(0xFFFF5A5A)),
-                  minimumSize: MaterialStateProperty.all(const Size(double.infinity, 40)),
-                  shape: MaterialStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  textStyle: MaterialStateProperty.all(
-                    const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  foregroundColor: MaterialStateProperty.all(Colors.white),
-                ),
-                onPressed: () => _removeMedicineFields(section, i),
-                child: const Text("Remove"),
-              ),
-            const SizedBox(height: 12),
-          ],
-          const SizedBox(height: 10),
-          CustomElevatedButton(
-            text: "Add More Medicine",
-            height: 40,
-            onPressed: () => _addNewMedicineFields(section),
-          ),
-          const SizedBox(height: 10),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDiagnosisDropdown({
     required String label,
     required String? value,
@@ -1195,6 +944,387 @@ class _AddDrugPageState extends State<AddDrugPage> {
             );
           }).toList(),
           onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCollapsibleMedicineSection({
+    required String medicineLabel,
+    required String section,
+    required List<TextEditingController> medicineControllers,
+    required List<String> formatValues,
+    required List<TextEditingController> dosageControllers,
+    required List<String> frequencyValues,
+    required List<TextEditingController> otherFrequencyControllers,
+    required List<TextEditingController> genericControllers,
+    required List<TextEditingController> companyNameControllers,
+    required List<String> timingValues,
+    required List<TextEditingController> otherTimingControllers,
+  }) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        title: Text(
+          medicineLabel,
+          style: const TextStyle(
+            fontWeight: FontWeight.normal,
+            fontSize: 16,
+          ),
+        ),
+        tilePadding: EdgeInsets.zero,
+        children: [
+          FutureBuilder<Map<String, List<String>>>(
+            future: MedicineData.getMedicineCategories(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return const Center(child: Text('Error loading medicines'));
+              } else if (!snapshot.hasData || (snapshot.data![section]?.isEmpty ?? true)) {
+                return const Center(child: Text('No medicines available for this class.'));
+              }
+
+              List<String> medicines = snapshot.data![section] ?? [];
+
+              return SizedBox(
+                height: 400, // Adjust height based on your needs
+                child: ListView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: medicineControllers.length + 1,
+                  itemBuilder: (context, i) {
+                    if (i == medicineControllers.length) {
+                      return Column(
+                        children: [
+                          const SizedBox(height: 10),
+                          CustomElevatedButton(
+                            text: "Add More Medicine",
+                            height: 40,
+                            onPressed: () => _addNewMedicineFields(section),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      );
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Column(
+                        children: [
+                          DropdownSearch<String>(
+                            popupProps: PopupProps.menu(
+                              showSearchBox: true,
+                              searchFieldProps: TextFieldProps(
+                                decoration: InputDecoration(
+                                  labelText: 'Search Medicine',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.add),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                      _showAddMedicineDialog(context, section);
+                                    },
+                                  ),
+                                ),
+                              ),
+                              constraints: const BoxConstraints(maxHeight: 300),
+                              menuProps: const MenuProps(
+                                elevation: 8.0,
+                                backgroundColor: Colors.white,
+                              ),
+                            ),
+                            items: medicines,
+                            dropdownDecoratorProps: DropDownDecoratorProps(
+                              dropdownSearchDecoration: InputDecoration(
+                                labelText: 'Medicine Name',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                            onChanged: (String? value) {
+                              if (value != null) {
+                                setState(() {
+                                  medicineControllers[i].text = value;
+                                });
+                              }
+                            },
+                            selectedItem: medicineControllers[i].text.isNotEmpty
+                                ? medicineControllers[i].text
+                                : null,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildFormatDropdown(
+                            label: 'Format',
+                            value: formatValues[i],
+                            onChanged: (value) {
+                              setState(() {
+                                formatValues[i] = value!;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTextFormField(
+                            label: 'Dosage',
+                            controller: dosageControllers[i],
+                            isNumeric: false,
+                            enableSpeech: true,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildFrequencyDropdown(
+                            label: 'Frequency',
+                            value: frequencyValues[i],
+                            onChanged: (value) {
+                              setState(() {
+                                frequencyValues[i] = value!;
+                              });
+                            },
+                          ),
+                          if (frequencyValues[i] == 'Other')
+                            Column(
+                              children: [
+                                const SizedBox(height: 12),
+                                _buildTextFormField(
+                                  label: 'Custom Frequency',
+                                  controller: otherFrequencyControllers[i],
+                                  isNumeric: false,
+                                ),
+                              ],
+                            ),
+                          const SizedBox(height: 12),
+                          _buildTimingDropdown(
+                            label: 'Medicine Timing',
+                            value: timingValues[i],
+                            onChanged: (value) {
+                              setState(() {
+                                timingValues[i] = value!;
+                              });
+                            },
+                          ),
+                          if (timingValues[i] == 'Other')
+                            Column(
+                              children: [
+                                const SizedBox(height: 12),
+                                _buildTextFormField(
+                                  label: 'Custom Timing',
+                                  controller: otherTimingControllers[i],
+                                  isNumeric: false,
+                                  enableSpeech: true,
+                                ),
+                              ],
+                            ),
+                          const SizedBox(height: 12),
+                          _buildTextFormField(
+                            label: 'Generic',
+                            controller: genericControllers[i],
+                            isNumeric: false,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTextFormField(
+                            label: 'Company Name',
+                            controller: companyNameControllers[i],
+                            isNumeric: false,
+                          ),
+                          const SizedBox(height: 12),
+                          if (i > 0 ||
+                              (i == 0 &&
+                                  (section == 'A' && medicineControllersA.length > 1 ||
+                                      section == 'B' && medicineControllersB.length > 1 ||
+                                      section == 'C' && medicineControllersC.length > 1 ||
+                                      section == 'D' && medicineControllersD.length > 1)))
+                            ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.all(const Color(0xFFFF5A5A)),
+                                minimumSize:
+                                    MaterialStateProperty.all(const Size(double.infinity, 40)),
+                                shape: MaterialStateProperty.all(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                textStyle: MaterialStateProperty.all(
+                                  const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                foregroundColor: MaterialStateProperty.all(Colors.white),
+                              ),
+                              onPressed: () => _removeMedicineFields(section, i),
+                              child: const Text("Remove"),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MyDeviceUtils.getScreenWidth(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: TopBar(
+          title: widget.record != null ? 'Edit Drug Data' : 'Add Drug Data',
+        ),
+      ),
+      body: SingleChildScrollView(
+        controller: _scrollController,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              _buildDiagnosisDropdown(
+                label: 'Diagnosis',
+                value: diagnosisValue,
+                onChanged: (value) {
+                  setState(() {
+                    diagnosisValue = value;
+                  });
+                },
+              ),
+              if (diagnosisValue == 'Other') ...[
+                const SizedBox(height: 20),
+                _buildTextFormField(
+                  label: 'Specify Diagnosis',
+                  controller: otherDiagnosisController,
+                  isNumeric: false,
+                  enableSpeech: true,
+                ),
+              ],
+              const SizedBox(height: 20),
+              _buildTextFormField(
+                label: 'Weight',
+                controller: weightController,
+                isNumeric: true,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextFormField(
+                        label: 'SBP', controller: sbpController, isNumeric: true),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildTextFormField(
+                        label: 'DBP', controller: dbpController, isNumeric: true),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildTextFormField(
+                        label: 'HR', controller: hrController, isNumeric: true),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildStatusDropdown(
+                label: 'Status',
+                value: statusValue,
+                onChanged: (value) {
+                  setState(() {
+                    statusValue = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildYesNoDropdown(
+                label: 'Can Walk For 5 Min',
+                value: canWalkValue,
+                onChanged: (value) {
+                  setState(() {
+                    canWalkValue = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildYesNoDropdown(
+                label: 'Can Climb Stairs',
+                value: canClimbValue,
+                onChanged: (value) {
+                  setState(() {
+                    canClimbValue = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildCollapsibleMedicineSection(
+                medicineLabel: 'ACEi/ARBs/ARNIs/Isolazine',
+                section: 'A',
+                medicineControllers: medicineControllersA,
+                formatValues: formatValuesA,
+                dosageControllers: dosageControllersA,
+                frequencyValues: frequencyValuesA,
+                otherFrequencyControllers: otherFrequencyControllersA,
+                genericControllers: genericControllersA,
+                companyNameControllers: companyNameControllersA,
+                timingValues: timingValuesA,
+                otherTimingControllers: otherTimingControllersA,
+              ),
+              _buildCollapsibleMedicineSection(
+                medicineLabel: 'Beta blockers, Ivabradine',
+                section: 'B',
+                medicineControllers: medicineControllersB,
+                formatValues: formatValuesB,
+                dosageControllers: dosageControllersB,
+                frequencyValues: frequencyValuesB,
+                otherFrequencyControllers: otherFrequencyControllersB,
+                genericControllers: genericControllersB,
+                companyNameControllers: companyNameControllersB,
+                timingValues: timingValuesB,
+                otherTimingControllers: otherTimingControllersB,
+              ),
+              _buildCollapsibleMedicineSection(
+                medicineLabel: 'Complementary(SGLT-2 i, Blood thinner, STATINs, Fibrates, Bile acid sequestrants)',
+                section: 'C',
+                medicineControllers: medicineControllersC,
+                formatValues: formatValuesC,
+                dosageControllers: dosageControllersC,
+                frequencyValues: frequencyValuesC,
+                otherFrequencyControllers: otherFrequencyControllersC,
+                genericControllers: genericControllersC,
+                companyNameControllers: companyNameControllersC,
+                timingValues: timingValuesC,
+                otherTimingControllers: otherTimingControllersC,
+              ),
+              _buildCollapsibleMedicineSection(
+                medicineLabel: 'Diuretics',
+                section: 'D',
+                medicineControllers: medicineControllersD,
+                formatValues: formatValuesD,
+                dosageControllers: dosageControllersD,
+                frequencyValues: frequencyValuesD,
+                otherFrequencyControllers: otherFrequencyControllersD,
+                genericControllers: genericControllersD,
+                companyNameControllers: companyNameControllersD,
+                timingValues: timingValuesD,
+                otherTimingControllers: otherTimingControllersD,
+              ),
+              const SizedBox(height: 30),
+              CustomElevatedButton(
+                text: widget.record != null ? 'Update Data' : 'Add Data',
+                height: 40,
+                onPressed: _isButtonLocked ? () {} : () => handleSubmit(context),
+              ),
+              const SizedBox(height: 60),
+            ],
+          ),
         ),
       ),
     );

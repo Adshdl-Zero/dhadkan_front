@@ -1,155 +1,84 @@
+import 'package:dhadkan/utils/http/http_client.dart';
+import 'package:dhadkan/utils/storage/secure_storage_service.dart';
+
 class MedicineData {
-  static const Map<String, List<String>> medicineCategories = {
-    // 'A': [
-    //   // ACEi
-    //   'Captopril',
-    //   'Enalapril',
-    //   'Ramipril',
-    //   'Benazepril',
-    //   'Lisinopril',
-    //   'Perindopril',
-    //   'Quinapril',
-    //   'Trandolapril',
-    //   // ARBs
-    //   'Losartan',
-    //   'Telmisartan',
-    //   'Valsartan',
-    //   'Olmesartan',
-    //   'Irbesartan',
-    //   'Azilsartan',
-    //   'Candesartan',
-    //   // ARNIs
-    //   'Sacubitril-valsartan',
-    //   // Isolazine
-    //   'Hydralazine and Isosorbide dinitrate',
-    // ],
-    // 'B': [
-    //   // Beta-blockers
-    //   'Acebutolol',
-    //   'Atenolol',
-    //   'Bisoprolol',
-    //   'Carvedilol',
-    //   'Labetalol',
-    //   'Metoprolol',
-    //   'Nadolol',
-    //   'Pindolol',
-    //   'Propranolol',
-    //   'Timolol',
-    //   'Ivabradine',
-    // ],
-    // 'C': [
-    //   // SGLT-2i
-    //   'Dapagliflozin',
-    //   'Empagliflozin',
-    //   'Sotagliflozin',
-    //   'Digoxin',
-    //   'Vericiguat',
-    //   // Blood thinners
-    //   'Warfarin',
-    //   'Dabigatran',
-    //   'Rivaroxaban',
-    //   // STATINs
-    //   'Atorvastatin',
-    //   'Fluvastatin',
-    //   'Lovastatin',
-    //   'Pitavastatin',
-    //   'Pravastatin',
-    //   'Rosuvastatin',
-    //   'Simvastatin',
-    //   // Fibrates
-    //   'Fenofibrate',
-    //   'Clofibrates',
-    //   // Bile acid sequestrants
-    //   'Cholestyramine',
-    //   'Colesevelam',
-    //   'Colestipol',
-    //   // Others
-    //   'Ezetimibe',
-    //   'Bempedoic acid',
-    //   'Niacin',
-    //   'Omega-3 fatty acids',
-    // ],
-    // 'D': [
-    //   // Diuretics
-    //   'Hydrochlorothiazide',
-    //   'Bumetanide',
-    //   'Metolazone',
-    //   'Chlorthalidone',
-    //   'Furosemide',
-    //   'Indapamide',
-    //   'Etacrynic acid',
-    //   'Triamterene',
-    //   'Amiloride',
-    //   'Spironolactone',
-    // ],
-    'A': [
-      'Azilsartan',
-      'Benazepril',
-      'Candesartan',
-      'Captopril',
-      'Enalapril',
-      'Hydralazine and Isosorbide dinitrate',
-      'Irbesartan',
-      'Lisinopril',
-      'Losartan',
-      'Olmesartan',
-      'Perindopril',
-      'Quinapril',
-      'Ramipril',
-      'Sacubitril-valsartan',
-      'Telmisartan',
-      'Valsartan'
-    ],
-    'B': [
-      'Acebutolol',
-      'Atenolol',
-      'Bisoprolol',
-      'Carvedilol',
-      'Ivabradine',
-      'Labetalol',
-      'Metoprolol',
-      'Nadolol',
-      'Pindolol',
-      'Propranolol',
-      'Timolol'
-    ],
-    'C': [
-      'Atorvastatin',
-      'Bempedoic acid',
-      'Cholestyramine',
-      'Clofibrates',
-      'Colesevelam',
-      'Colestipol',
-      'Dabigatran',
-      'Dapagliflozin',
-      'Digoxin',
-      'Empagliflozin',
-      'Ezetimibe',
-      'Fenofibrate',
-      'Fluvastatin',
-      'Lovastatin',
-      'Niacin',
-      'Omega-3 fatty acids',
-      'Pitavastatin',
-      'Pravastatin',
-      'Rivaroxaban',
-      'Rosuvastatin',
-      'Simvastatin',
-      'Sotagliflozin',
-      'Vericiguat',
-      'Warfarin'
-    ],
-    'D': [
-      'Amiloride',
-      'Bumetanide',
-      'Chlorthalidone',
-      'Etacrynic acid',
-      'Furosemide',
-      'Hydrochlorothiazide',
-      'Indapamide',
-      'Metolazone',
-      'Spironolactone',
-      'Triamterene'
-    ]
+  static Map<String, List<String>> _medicineCategories = {
+    'A': [],
+    'B': [],
+    'C': [],
+    'D': [],
   };
+
+  static Future<Map<String, List<String>>> getMedicineCategories() async {
+    try {
+      String? token = await SecureStorageService.getData('authToken');
+      if (token == null) {
+        print('No authentication token found');
+        return _medicineCategories;
+      }
+
+      final response = await MyHttpHelper.private_get('/drugs/get', token);
+      print('Drugs API Response: $response');
+
+      if (response.containsKey('success') &&
+          response['success'].toString() == "true") {
+        List<dynamic> data = response['data'] ?? [];
+        if (data.isEmpty) {
+          print('No drug data returned from API');
+          return _medicineCategories;
+        }
+
+        _medicineCategories = {
+          'A': List<String>.from(data.length > 0 ? data[0] : []),
+          'B': List<String>.from(data.length > 1 ? data[1] : []),
+          'C': List<String>.from(data.length > 2 ? data[2] : []),
+          'D': List<String>.from(data.length > 3 ? data[3] : []),
+        };
+      } else {
+        print('API error: ${response['message'] ?? 'Unknown error'}');
+        return _medicineCategories;
+      }
+    } catch (e, stackTrace) {
+      print('Error fetching medicine categories: $e');
+      print('Stack trace: $stackTrace');
+      return _medicineCategories;
+    }
+    return _medicineCategories;
+  }
+
+  static Map<String, List<String>> get cachedMedicineCategories =>
+      _medicineCategories;
+
+  static Future<bool> addMedicine(String name, String drugClass) async {
+    try {
+      String? token = await SecureStorageService.getData('authToken');
+      if (token == null) {
+        print('No authentication token found');
+        return false;
+      }
+
+      final response = await MyHttpHelper.private_post(
+        '/drugs/add',
+        {'name': name, 'class': drugClass},
+        token,
+      );
+      print('Add Medicine Response: $response');
+
+      if (response.containsKey('success') &&
+          response['success'].toString() == "true") {
+        _medicineCategories[drugClass] = [
+          ..._medicineCategories[drugClass] ?? [],
+          name
+        ]..sort();
+        return true;
+      } else {
+        print('Add medicine error: ${response['message'] ?? 'Unknown error'}');
+        return false;
+      }
+    } catch (e, stackTrace) {
+      print('Error adding medicine: $e');
+      print('Stack trace: $stackTrace');
+      return false;
+    }
+  }
 }
