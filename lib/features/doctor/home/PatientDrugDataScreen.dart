@@ -16,10 +16,17 @@ Future<List<PatientDrugRecord>> fetchPatientDrugData(
   final response = await MyHttpHelper.private_post(
       '/doctor/patient-drug-data/mobile/$patientMobile', body, token);
 
-  List<PatientDrugRecord> records = List<PatientDrugRecord>.from(
-      (response['data'] as List).map((item) => PatientDrugRecord.fromJson(item)));
-  return records;
+  // Safely handle potential null or non-list 'data'
+  if (response['data'] is List) {
+    List<PatientDrugRecord> records = List<PatientDrugRecord>.from(
+        (response['data'] as List).map((item) => PatientDrugRecord.fromJson(item)));
+    return records;
+  } else {
+    // Return an empty list if 'data' is not a list or is null
+    return [];
+  }
 }
+
 
 // Function to fetch patient details
 Future<Map<String, dynamic>> fetchPatientDetails(
