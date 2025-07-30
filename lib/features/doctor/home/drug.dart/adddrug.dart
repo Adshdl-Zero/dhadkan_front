@@ -51,6 +51,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
   final List<TextEditingController> otherFrequencyControllersA = [];
   final List<String> timingValuesA = [];
   final List<TextEditingController> otherTimingControllersA = [];
+  final List<FocusNode> dropdownFocusNodesA = [];
 
   // Medicine Section B
   final List<TextEditingController> medicineControllersB = [];
@@ -62,6 +63,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
   final List<TextEditingController> otherFrequencyControllersB = [];
   final List<String> timingValuesB = [];
   final List<TextEditingController> otherTimingControllersB = [];
+  final List<FocusNode> dropdownFocusNodesB = [];
 
   // Medicine Section C
   final List<TextEditingController> medicineControllersC = [];
@@ -73,6 +75,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
   final List<TextEditingController> otherFrequencyControllersC = [];
   final List<String> timingValuesC = [];
   final List<TextEditingController> otherTimingControllersC = [];
+  final List<FocusNode> dropdownFocusNodesC = [];
 
   // Medicine Section D
   final List<TextEditingController> medicineControllersD = [];
@@ -84,6 +87,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
   final List<TextEditingController> otherFrequencyControllersD = [];
   final List<String> timingValuesD = [];
   final List<TextEditingController> otherTimingControllersD = [];
+  final List<FocusNode> dropdownFocusNodesD = [];
 
   // Options
   final List<String> frequencyOptions = [
@@ -104,14 +108,29 @@ class _AddDrugPageState extends State<AddDrugPage> {
   TextEditingController? currentListeningController;
   bool _isButtonLocked = false;
   final ScrollController _scrollController = ScrollController();
+  Map<String, List<String>> _medicineCategories = {};
 
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
     _initialize();
+    _fetchMedicineCategories();
     _autofillData();
-    MedicineData.getMedicineCategories();
+  }
+
+  Future<void> _fetchMedicineCategories() async {
+    try {
+      final categories = await MedicineData.getMedicineCategories();
+      if (mounted) {
+        setState(() {
+          _medicineCategories = categories;
+        });
+      }
+    } catch (e) {
+      print("Error fetching medicine categories: $e");
+      _showErrorSnackbar(context, 'Error fetching medicine categories');
+    }
   }
 
   void _autofillData() {
@@ -190,6 +209,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
     frequencyValuesA.clear();
     timingValuesA.clear();
     otherTimingControllersA.clear();
+    dropdownFocusNodesA.clear();
     medicineControllersB.clear();
     dosageControllersB.clear();
     genericControllersB.clear();
@@ -199,6 +219,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
     frequencyValuesB.clear();
     timingValuesB.clear();
     otherTimingControllersB.clear();
+    dropdownFocusNodesB.clear();
     medicineControllersC.clear();
     dosageControllersC.clear();
     genericControllersC.clear();
@@ -208,6 +229,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
     frequencyValuesC.clear();
     timingValuesC.clear();
     otherTimingControllersC.clear();
+    dropdownFocusNodesC.clear();
     medicineControllersD.clear();
     dosageControllersD.clear();
     genericControllersD.clear();
@@ -217,6 +239,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
     frequencyValuesD.clear();
     timingValuesD.clear();
     otherTimingControllersD.clear();
+    dropdownFocusNodesD.clear();
   }
 
   void _addPopulatedMedicineFields(
@@ -236,6 +259,10 @@ class _AddDrugPageState extends State<AddDrugPage> {
     TextEditingController companyCtrl = TextEditingController(text: company);
     TextEditingController otherFreqCtrl = TextEditingController(text: customFrequency);
     TextEditingController otherTimingCtrl = TextEditingController(text: customTiming);
+    FocusNode focusNode = FocusNode();
+    focusNode.addListener(() {
+      _scrollToFocusedField(context, focusNode);
+    });
 
     switch (section) {
       case 'A':
@@ -248,6 +275,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
         otherFrequencyControllersA.add(otherFreqCtrl);
         timingValuesA.add(timing);
         otherTimingControllersA.add(otherTimingCtrl);
+        dropdownFocusNodesA.add(focusNode);
         break;
       case 'B':
         medicineControllersB.add(nameCtrl);
@@ -259,6 +287,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
         otherFrequencyControllersB.add(otherFreqCtrl);
         timingValuesB.add(timing);
         otherTimingControllersB.add(otherTimingCtrl);
+        dropdownFocusNodesB.add(focusNode);
         break;
       case 'C':
         medicineControllersC.add(nameCtrl);
@@ -270,6 +299,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
         otherFrequencyControllersC.add(otherFreqCtrl);
         timingValuesC.add(timing);
         otherTimingControllersC.add(otherTimingCtrl);
+        dropdownFocusNodesC.add(focusNode);
         break;
       case 'D':
         medicineControllersD.add(nameCtrl);
@@ -281,6 +311,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
         otherFrequencyControllersD.add(otherFreqCtrl);
         timingValuesD.add(timing);
         otherTimingControllersD.add(otherTimingCtrl);
+        dropdownFocusNodesD.add(focusNode);
         break;
     }
   }
@@ -355,24 +386,28 @@ class _AddDrugPageState extends State<AddDrugPage> {
     _disposeControllerList(companyNameControllersA);
     _disposeControllerList(otherFrequencyControllersA);
     _disposeControllerList(otherTimingControllersA);
+    _disposeFocusNodeList(dropdownFocusNodesA);
     _disposeControllerList(medicineControllersB);
     _disposeControllerList(dosageControllersB);
     _disposeControllerList(genericControllersB);
     _disposeControllerList(companyNameControllersB);
     _disposeControllerList(otherFrequencyControllersB);
     _disposeControllerList(otherTimingControllersB);
+    _disposeFocusNodeList(dropdownFocusNodesB);
     _disposeControllerList(medicineControllersC);
     _disposeControllerList(dosageControllersC);
     _disposeControllerList(genericControllersC);
     _disposeControllerList(companyNameControllersC);
     _disposeControllerList(otherFrequencyControllersC);
     _disposeControllerList(otherTimingControllersC);
+    _disposeFocusNodeList(dropdownFocusNodesC);
     _disposeControllerList(medicineControllersD);
     _disposeControllerList(dosageControllersD);
     _disposeControllerList(genericControllersD);
     _disposeControllerList(companyNameControllersD);
     _disposeControllerList(otherFrequencyControllersD);
     _disposeControllerList(otherTimingControllersD);
+    _disposeFocusNodeList(dropdownFocusNodesD);
 
     if (_speech.isListening) {
       _speech.stop();
@@ -386,52 +421,73 @@ class _AddDrugPageState extends State<AddDrugPage> {
     }
   }
 
+  void _disposeFocusNodeList(List<FocusNode> focusNodes) {
+    for (var focusNode in focusNodes) {
+      focusNode.dispose();
+    }
+  }
+
   void _addNewMedicineFields(String section, {bool isInitial = false}) {
     setState(() {
+      TextEditingController nameCtrl = TextEditingController();
+      TextEditingController dosageCtrl = TextEditingController();
+      TextEditingController genericCtrl = TextEditingController();
+      TextEditingController companyCtrl = TextEditingController();
+      TextEditingController otherFreqCtrl = TextEditingController();
+      TextEditingController otherTimingCtrl = TextEditingController();
+      FocusNode focusNode = FocusNode();
+      focusNode.addListener(() {
+        _scrollToFocusedField(context, focusNode);
+      });
+
       switch (section) {
         case 'A':
-          medicineControllersA.add(TextEditingController());
-          dosageControllersA.add(TextEditingController());
-          genericControllersA.add(TextEditingController());
-          companyNameControllersA.add(TextEditingController());
+          medicineControllersA.add(nameCtrl);
+          dosageControllersA.add(dosageCtrl);
+          genericControllersA.add(genericCtrl);
+          companyNameControllersA.add(companyCtrl);
           formatValuesA.add('Tablet');
           frequencyValuesA.add('Once a day');
-          otherFrequencyControllersA.add(TextEditingController());
+          otherFrequencyControllersA.add(otherFreqCtrl);
           timingValuesA.add('Morning');
-          otherTimingControllersA.add(TextEditingController());
+          otherTimingControllersA.add(otherTimingCtrl);
+          dropdownFocusNodesA.add(focusNode);
           break;
         case 'B':
-          medicineControllersB.add(TextEditingController());
-          dosageControllersB.add(TextEditingController());
-          genericControllersB.add(TextEditingController());
-          companyNameControllersB.add(TextEditingController());
+          medicineControllersB.add(nameCtrl);
+          dosageControllersB.add(dosageCtrl);
+          genericControllersB.add(genericCtrl);
+          companyNameControllersB.add(companyCtrl);
           formatValuesB.add('Tablet');
           frequencyValuesB.add('Once a day');
-          otherFrequencyControllersB.add(TextEditingController());
+          otherFrequencyControllersB.add(otherFreqCtrl);
           timingValuesB.add('Morning');
-          otherTimingControllersB.add(TextEditingController());
+          otherTimingControllersB.add(otherTimingCtrl);
+          dropdownFocusNodesB.add(focusNode);
           break;
         case 'C':
-          medicineControllersC.add(TextEditingController());
-          dosageControllersC.add(TextEditingController());
-          genericControllersC.add(TextEditingController());
-          companyNameControllersC.add(TextEditingController());
+          medicineControllersC.add(nameCtrl);
+          dosageControllersC.add(dosageCtrl);
+          genericControllersC.add(genericCtrl);
+          companyNameControllersC.add(companyCtrl);
           formatValuesC.add('Tablet');
           frequencyValuesC.add('Once a day');
-          otherFrequencyControllersC.add(TextEditingController());
+          otherFrequencyControllersC.add(otherFreqCtrl);
           timingValuesC.add('Morning');
-          otherTimingControllersC.add(TextEditingController());
+          otherTimingControllersC.add(otherTimingCtrl);
+          dropdownFocusNodesC.add(focusNode);
           break;
         case 'D':
-          medicineControllersD.add(TextEditingController());
-          dosageControllersD.add(TextEditingController());
-          genericControllersD.add(TextEditingController());
-          companyNameControllersD.add(TextEditingController());
+          medicineControllersD.add(nameCtrl);
+          dosageControllersD.add(dosageCtrl);
+          genericControllersD.add(genericCtrl);
+          companyNameControllersD.add(companyCtrl);
           formatValuesD.add('Tablet');
           frequencyValuesD.add('Once a day');
-          otherFrequencyControllersD.add(TextEditingController());
+          otherFrequencyControllersD.add(otherFreqCtrl);
           timingValuesD.add('Morning');
-          otherTimingControllersD.add(TextEditingController());
+          otherTimingControllersD.add(otherTimingCtrl);
+          dropdownFocusNodesD.add(focusNode);
           break;
       }
     });
@@ -455,6 +511,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
           frequencyValuesA.removeAt(index);
           timingValuesA.removeAt(index);
           otherTimingControllersA.removeAt(index).dispose();
+          dropdownFocusNodesA.removeAt(index).dispose();
           break;
         case 'B':
           medicineControllersB.removeAt(index).dispose();
@@ -466,6 +523,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
           frequencyValuesB.removeAt(index);
           timingValuesB.removeAt(index);
           otherTimingControllersB.removeAt(index).dispose();
+          dropdownFocusNodesB.removeAt(index).dispose();
           break;
         case 'C':
           medicineControllersC.removeAt(index).dispose();
@@ -477,6 +535,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
           frequencyValuesC.removeAt(index);
           timingValuesC.removeAt(index);
           otherTimingControllersC.removeAt(index).dispose();
+          dropdownFocusNodesC.removeAt(index).dispose();
           break;
         case 'D':
           medicineControllersD.removeAt(index).dispose();
@@ -488,6 +547,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
           frequencyValuesD.removeAt(index);
           timingValuesD.removeAt(index);
           otherTimingControllersD.removeAt(index).dispose();
+          dropdownFocusNodesD.removeAt(index).dispose();
           break;
       }
     });
@@ -655,7 +715,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
                   if (mounted) {
                     Navigator.of(context).pop();
                     if (success) {
-                      setState(() {});
+                      await _fetchMedicineCategories();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('"$newMedicineName" added successfully.'),
@@ -683,11 +743,14 @@ class _AddDrugPageState extends State<AddDrugPage> {
   void _scrollToFocusedField(BuildContext context, FocusNode focusNode) {
     if (focusNode.hasFocus) {
       Future.delayed(const Duration(milliseconds: 300), () {
-        Scrollable.ensureVisible(
-          focusNode.context!,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+        if (focusNode.context != null) {
+          Scrollable.ensureVisible(
+            focusNode.context!,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            alignment: 0.5,
+          );
+        }
       });
     }
   }
@@ -710,23 +773,26 @@ class _AddDrugPageState extends State<AddDrugPage> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         suffixIcon: (!isNumeric && enableSpeech)
             ? IconButton(
-                icon: Icon(
-                  Icons.mic,
-                  color: (currentListeningController == controller && isListening)
-                      ? Colors.red
-                      : Colors.grey,
-                ),
-                onPressed: () {
-                  if (isListening && currentListeningController == controller) {
-                    stopListening();
-                  } else {
-                    startListening(controller);
-                  }
-                },
-              )
+          icon: Icon(
+            Icons.mic,
+            color: (currentListeningController == controller && isListening)
+                ? Colors.red
+                : Colors.grey,
+          ),
+          onPressed: () {
+            if (isListening && currentListeningController == controller) {
+              stopListening();
+            } else {
+              startListening(controller);
+            }
+          },
+        )
             : null,
       ),
       keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+      onChanged: (value) {
+        controller.text = value;
+      },
     );
   }
 
@@ -735,6 +801,10 @@ class _AddDrugPageState extends State<AddDrugPage> {
     required String value,
     required void Function(String?) onChanged,
   }) {
+    final FocusNode focusNode = FocusNode();
+    focusNode.addListener(() {
+      _scrollToFocusedField(context, focusNode);
+    });
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
@@ -743,6 +813,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: DropdownButtonFormField<String>(
+          focusNode: focusNode,
           decoration: InputDecoration(
             labelText: label,
             border: InputBorder.none,
@@ -771,6 +842,10 @@ class _AddDrugPageState extends State<AddDrugPage> {
     required String value,
     required void Function(String?) onChanged,
   }) {
+    final FocusNode focusNode = FocusNode();
+    focusNode.addListener(() {
+      _scrollToFocusedField(context, focusNode);
+    });
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
@@ -779,6 +854,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: DropdownButtonFormField<String>(
+          focusNode: focusNode,
           decoration: InputDecoration(
             labelText: label,
             border: InputBorder.none,
@@ -807,6 +883,10 @@ class _AddDrugPageState extends State<AddDrugPage> {
     required String value,
     required void Function(String?) onChanged,
   }) {
+    final FocusNode focusNode = FocusNode();
+    focusNode.addListener(() {
+      _scrollToFocusedField(context, focusNode);
+    });
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
@@ -815,6 +895,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: DropdownButtonFormField<String>(
+          focusNode: focusNode,
           decoration: InputDecoration(
             labelText: label,
             border: InputBorder.none,
@@ -843,6 +924,10 @@ class _AddDrugPageState extends State<AddDrugPage> {
     required String? value,
     required void Function(String?) onChanged,
   }) {
+    final FocusNode focusNode = FocusNode();
+    focusNode.addListener(() {
+      _scrollToFocusedField(context, focusNode);
+    });
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
@@ -851,6 +936,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: DropdownButtonFormField<String>(
+          focusNode: focusNode,
           decoration: InputDecoration(
             labelText: label,
             border: InputBorder.none,
@@ -880,6 +966,10 @@ class _AddDrugPageState extends State<AddDrugPage> {
     required String? value,
     required void Function(String?) onChanged,
   }) {
+    final FocusNode focusNode = FocusNode();
+    focusNode.addListener(() {
+      _scrollToFocusedField(context, focusNode);
+    });
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
@@ -888,6 +978,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: DropdownButtonFormField<String>(
+          focusNode: focusNode,
           decoration: InputDecoration(
             labelText: label,
             border: InputBorder.none,
@@ -917,6 +1008,10 @@ class _AddDrugPageState extends State<AddDrugPage> {
     required String? value,
     required void Function(String?) onChanged,
   }) {
+    final FocusNode focusNode = FocusNode();
+    focusNode.addListener(() {
+      _scrollToFocusedField(context, focusNode);
+    });
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
@@ -925,6 +1020,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: DropdownButtonFormField<String>(
+          focusNode: focusNode,
           decoration: InputDecoration(
             labelText: label,
             border: InputBorder.none,
@@ -961,7 +1057,10 @@ class _AddDrugPageState extends State<AddDrugPage> {
     required List<TextEditingController> companyNameControllers,
     required List<String> timingValues,
     required List<TextEditingController> otherTimingControllers,
+    required List<FocusNode> dropdownFocusNodes,
   }) {
+    List<String> medicines = _medicineCategories[section] ?? [];
+
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
@@ -974,195 +1073,167 @@ class _AddDrugPageState extends State<AddDrugPage> {
         ),
         tilePadding: EdgeInsets.zero,
         children: [
-          FutureBuilder<Map<String, List<String>>>(
-            future: MedicineData.getMedicineCategories(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return const Center(child: Text('Error loading medicines'));
-              } else if (!snapshot.hasData || (snapshot.data![section]?.isEmpty ?? true)) {
-                return const Center(child: Text('No medicines available for this class.'));
-              }
-
-              List<String> medicines = snapshot.data![section] ?? [];
-
-              return SizedBox(
-                height: 400, // Adjust height based on your needs
-                child: ListView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: medicineControllers.length + 1,
-                  itemBuilder: (context, i) {
-                    if (i == medicineControllers.length) {
-                      return Column(
-                        children: [
-                          const SizedBox(height: 10),
-                          CustomElevatedButton(
-                            text: "Add More Medicine",
-                            height: 40,
-                            onPressed: () => _addNewMedicineFields(section),
+          Column(
+            children: [
+              for (int i = 0; i < medicineControllers.length; i++) ...[
+                Focus(
+                  focusNode: dropdownFocusNodes[i],
+                  child: DropdownSearch<String>(
+                    popupProps: PopupProps.menu(
+                      showSearchBox: true,
+                      searchFieldProps: TextFieldProps(
+                        decoration: InputDecoration(
+                          labelText: 'Search Medicine',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(height: 10),
-                        ],
-                      );
-                    }
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        children: [
-                          DropdownSearch<String>(
-                            popupProps: PopupProps.menu(
-                              showSearchBox: true,
-                              searchFieldProps: TextFieldProps(
-                                decoration: InputDecoration(
-                                  labelText: 'Search Medicine',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: const Icon(Icons.add),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                      _showAddMedicineDialog(context, section);
-                                    },
-                                  ),
-                                ),
-                              ),
-                              constraints: const BoxConstraints(maxHeight: 300),
-                              menuProps: const MenuProps(
-                                elevation: 8.0,
-                                backgroundColor: Colors.white,
-                              ),
-                            ),
-                            items: medicines,
-                            dropdownDecoratorProps: DropDownDecoratorProps(
-                              dropdownSearchDecoration: InputDecoration(
-                                labelText: 'Medicine Name',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
-                            onChanged: (String? value) {
-                              if (value != null) {
-                                setState(() {
-                                  medicineControllers[i].text = value;
-                                });
-                              }
-                            },
-                            selectedItem: medicineControllers[i].text.isNotEmpty
-                                ? medicineControllers[i].text
-                                : null,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildFormatDropdown(
-                            label: 'Format',
-                            value: formatValues[i],
-                            onChanged: (value) {
-                              setState(() {
-                                formatValues[i] = value!;
-                              });
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              _showAddMedicineDialog(context, section);
                             },
                           ),
-                          const SizedBox(height: 12),
-                          _buildTextFormField(
-                            label: 'Dosage',
-                            controller: dosageControllers[i],
-                            isNumeric: false,
-                            enableSpeech: true,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildFrequencyDropdown(
-                            label: 'Frequency',
-                            value: frequencyValues[i],
-                            onChanged: (value) {
-                              setState(() {
-                                frequencyValues[i] = value!;
-                              });
-                            },
-                          ),
-                          if (frequencyValues[i] == 'Other')
-                            Column(
-                              children: [
-                                const SizedBox(height: 12),
-                                _buildTextFormField(
-                                  label: 'Custom Frequency',
-                                  controller: otherFrequencyControllers[i],
-                                  isNumeric: false,
-                                ),
-                              ],
-                            ),
-                          const SizedBox(height: 12),
-                          _buildTimingDropdown(
-                            label: 'Medicine Timing',
-                            value: timingValues[i],
-                            onChanged: (value) {
-                              setState(() {
-                                timingValues[i] = value!;
-                              });
-                            },
-                          ),
-                          if (timingValues[i] == 'Other')
-                            Column(
-                              children: [
-                                const SizedBox(height: 12),
-                                _buildTextFormField(
-                                  label: 'Custom Timing',
-                                  controller: otherTimingControllers[i],
-                                  isNumeric: false,
-                                  enableSpeech: true,
-                                ),
-                              ],
-                            ),
-                          const SizedBox(height: 12),
-                          _buildTextFormField(
-                            label: 'Generic',
-                            controller: genericControllers[i],
-                            isNumeric: false,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildTextFormField(
-                            label: 'Company Name',
-                            controller: companyNameControllers[i],
-                            isNumeric: false,
-                          ),
-                          const SizedBox(height: 12),
-                          if (i > 0 ||
-                              (i == 0 &&
-                                  (section == 'A' && medicineControllersA.length > 1 ||
-                                      section == 'B' && medicineControllersB.length > 1 ||
-                                      section == 'C' && medicineControllersC.length > 1 ||
-                                      section == 'D' && medicineControllersD.length > 1)))
-                            ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.all(const Color(0xFFFF5A5A)),
-                                minimumSize:
-                                    MaterialStateProperty.all(const Size(double.infinity, 40)),
-                                shape: MaterialStateProperty.all(
-                                  RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                textStyle: MaterialStateProperty.all(
-                                  const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                foregroundColor: MaterialStateProperty.all(Colors.white),
-                              ),
-                              onPressed: () => _removeMedicineFields(section, i),
-                              child: const Text("Remove"),
-                            ),
-                        ],
+                        ),
                       ),
-                    );
+                      constraints: const BoxConstraints(maxHeight: 300),
+                      menuProps: const MenuProps(
+                        elevation: 8.0,
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                    items: medicines,
+                    dropdownDecoratorProps: DropDownDecoratorProps(
+                      dropdownSearchDecoration: InputDecoration(
+                        labelText: 'Medicine Name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    onChanged: (String? value) {
+                      if (value != null) {
+                        setState(() {
+                          medicineControllers[i].text = value;
+                        });
+                      }
+                    },
+                    selectedItem: medicineControllers[i].text.isNotEmpty
+                        ? medicineControllers[i].text
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildFormatDropdown(
+                  label: 'Format',
+                  value: formatValues[i],
+                  onChanged: (value) {
+                    setState(() {
+                      formatValues[i] = value!;
+                    });
                   },
                 ),
-              );
-            },
+                const SizedBox(height: 12),
+                _buildTextFormField(
+                  label: 'Dosage',
+                  controller: dosageControllers[i],
+                  isNumeric: false,
+                  enableSpeech: true,
+                ),
+                const SizedBox(height: 12),
+                _buildFrequencyDropdown(
+                  label: 'Frequency',
+                  value: frequencyValues[i],
+                  onChanged: (value) {
+                    setState(() {
+                      frequencyValues[i] = value!;
+                    });
+                  },
+                ),
+                if (frequencyValues[i] == 'Other')
+                  Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      _buildTextFormField(
+                        label: 'Custom Frequency',
+                        controller: otherFrequencyControllers[i],
+                        isNumeric: false,
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 12),
+                _buildTimingDropdown(
+                  label: 'Medicine Timing',
+                  value: timingValues[i],
+                  onChanged: (value) {
+                    setState(() {
+                      timingValues[i] = value!;
+                    });
+                  },
+                ),
+                if (timingValues[i] == 'Other')
+                  Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      _buildTextFormField(
+                        label: 'Custom Timing',
+                        controller: otherTimingControllers[i],
+                        isNumeric: false,
+                        enableSpeech: true,
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 12),
+                _buildTextFormField(
+                  label: 'Generic',
+                  controller: genericControllers[i],
+                  isNumeric: false,
+                ),
+                const SizedBox(height: 12),
+                _buildTextFormField(
+                  label: 'Company Name',
+                  controller: companyNameControllers[i],
+                  isNumeric: false,
+                ),
+                const SizedBox(height: 12),
+                if (i > 0 ||
+                    (i == 0 &&
+                        (section == 'A' && medicineControllersA.length > 1 ||
+                            section == 'B' && medicineControllersB.length > 1 ||
+                            section == 'C' && medicineControllersC.length > 1 ||
+                            section == 'D' && medicineControllersD.length > 1)))
+                  ElevatedButton(
+                    style: ButtonStyle(
+                      backgroundColor:
+                      MaterialStateProperty.all(const Color(0xFFFF5A5A)),
+                      minimumSize:
+                      MaterialStateProperty.all(const Size(double.infinity, 40)),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      textStyle: MaterialStateProperty.all(
+                        const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      foregroundColor: MaterialStateProperty.all(Colors.white),
+                    ),
+                    onPressed: () => _removeMedicineFields(section, i),
+                    child: const Text("Remove"),
+                  ),
+                const SizedBox(height: 12),
+              ],
+              const SizedBox(height: 10),
+              CustomElevatedButton(
+                text: "Add More Medicine",
+                height: 40,
+                onPressed: () => _addNewMedicineFields(section),
+              ),
+              const SizedBox(height: 10),
+            ],
           ),
         ],
       ),
@@ -1276,6 +1347,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
                 companyNameControllers: companyNameControllersA,
                 timingValues: timingValuesA,
                 otherTimingControllers: otherTimingControllersA,
+                dropdownFocusNodes: dropdownFocusNodesA,
               ),
               _buildCollapsibleMedicineSection(
                 medicineLabel: 'Beta blockers, Ivabradine',
@@ -1289,6 +1361,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
                 companyNameControllers: companyNameControllersB,
                 timingValues: timingValuesB,
                 otherTimingControllers: otherTimingControllersB,
+                dropdownFocusNodes: dropdownFocusNodesB,
               ),
               _buildCollapsibleMedicineSection(
                 medicineLabel: 'Complementary(SGLT-2 i, Blood thinner, STATINs, Fibrates, Bile acid sequestrants)',
@@ -1302,6 +1375,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
                 companyNameControllers: companyNameControllersC,
                 timingValues: timingValuesC,
                 otherTimingControllers: otherTimingControllersC,
+                dropdownFocusNodes: dropdownFocusNodesC,
               ),
               _buildCollapsibleMedicineSection(
                 medicineLabel: 'Diuretics',
@@ -1315,6 +1389,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
                 companyNameControllers: companyNameControllersD,
                 timingValues: timingValuesD,
                 otherTimingControllers: otherTimingControllersD,
+                dropdownFocusNodes: dropdownFocusNodesD,
               ),
               const SizedBox(height: 30),
               CustomElevatedButton(

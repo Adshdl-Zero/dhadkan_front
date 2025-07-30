@@ -16,7 +16,7 @@ class Report {
   final String id;
   final String patient;
   final String mobile;
-  final String time;
+  final String time; // This will now typically be the UTC time from the main report object
   final Map<String, dynamic> files;
   final bool hasReports;
 
@@ -34,7 +34,7 @@ class Report {
       id: json['_id'] ?? '',
       patient: json['patient'] ?? '',
       mobile: json['mobile'] ?? '',
-      time: json['time'] ?? '',
+      time: json['time'] ?? '', // This might be UTC, use uploadedAtIST for display
       files: json['files'] ?? {},
       hasReports: json['hasReports'] ?? false,
     );
@@ -48,8 +48,10 @@ class ReportFile {
   final String type;
   final String originalname;
   final int size;
-  final String uploadedAt;
-  final String? reportTime;
+  final String? comment;
+  final DateTime uploadedAt; // This will be the UTC DateTime object from the backend
+  final String? uploadedAtIST; // New field to store the formatted IST string
+  final DateTime? reportTime;
 
   ReportFile({
     required this.path,
@@ -57,7 +59,9 @@ class ReportFile {
     required this.type,
     required this.originalname,
     required this.size,
+    this.comment,
     required this.uploadedAt,
+    this.uploadedAtIST, // Add to constructor
     this.reportTime,
   });
 
@@ -68,8 +72,10 @@ class ReportFile {
       type: json['type'] ?? '',
       originalname: json['originalname'] ?? '',
       size: json['size'] ?? 0,
-      uploadedAt: json['uploadedAt'] ?? '',
-      reportTime: json['reportTime'],
+      comment: json['comment'],
+      uploadedAt: DateTime.parse(json['uploadedAt']), // Parse ISO string (likely UTC)
+      uploadedAtIST: json['uploadedAtIST'], // Get the formatted IST string
+      reportTime: json['reportTime'] != null ? DateTime.parse(json['reportTime']) : null,
     );
   }
 }
@@ -149,12 +155,14 @@ class _ReportPageState extends State<ReportPage> {
     });
   }
 
-  String _formatDate(String dateString) {
+  // This function is no longer strictly needed for uploadedAtIST,
+  // but can be kept for other DateTime objects if needed.
+  // Changed format to exclude seconds.
+  String _formatDate(DateTime date) {
     try {
-      final date = DateTime.parse(dateString);
       return DateFormat('dd MMM yyyy, hh:mm a').format(date);
     } catch (e) {
-      return dateString;
+      return 'Date unavailable';
     }
   }
 
@@ -306,61 +314,86 @@ class _ReportPageState extends State<ReportPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: MyColors.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  reportType['icon'] as IconData,
-                                  color: MyColors.primary,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () {
+                            _viewFile(reportFile.url, reportFile.type, reportType['name'] as String);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
-                                    Text(
-                                      reportType['name'] as String,
-                                      style: MyTextTheme.textTheme.headlineMedium,
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: MyColors.primary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        reportType['icon'] as IconData,
+                                        color: MyColors.primary,
+                                        size: 24,
+                                      ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Uploaded: ${_formatDate(reportFile.uploadedAt)}',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey[600],
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            reportType['name'] as String,
+                                            style: MyTextTheme.textTheme.headlineMedium,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          // Use uploadedAtIST for display, without seconds
+                                          Text(
+                                            'Uploaded: ${reportFile.uploadedAtIST != null ? DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.parse(reportFile.uploadedAtIST!).toLocal()) : 'Date unavailable'}',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              ElevatedButton(
-                                onPressed: () {
-                                  _viewFile(reportFile.url, reportFile.type, reportType['name'] as String);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: MyColors.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
+                                if (reportFile.comment != null && reportFile.comment!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Comments: ${reportFile.comment!}', // Moved comment next to "Comments:"
+                                          style: MyTextTheme.textTheme.bodyMedium, // Removed bold and applied to the whole line
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                const SizedBox(height: 12),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    _viewFile(reportFile.url, reportFile.type, reportType['name'] as String);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: MyColors.primary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  ),
+                                  child: Text(
+                                    'View Report',
+                                    style: MyTextTheme.textTheme.titleMedium,
+                                  ),
                                 ),
-                                child: Text(
-                                  'View',
-                                  style: MyTextTheme.textTheme.titleMedium,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -377,9 +410,9 @@ class _ReportPageState extends State<ReportPage> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: _navigateToUpload,
-                        icon: const Icon(Icons.refresh),
+                        icon: const Icon(Icons.add),
                         label: Text(
-                          'Re-upload Report',
+                          'Upload New Report',
                           style: MyTextTheme.textTheme.titleMedium?.copyWith(
                             fontSize: 15.5,
                           ),

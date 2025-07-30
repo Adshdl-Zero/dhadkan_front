@@ -28,6 +28,16 @@ class _UploadReportPageState extends State<UploadReportPage> {
     'biochemistry_report': null,
   };
 
+  final Map<String, TextEditingController> _commentControllers = {
+    'opd_card': TextEditingController(),
+    'echo': TextEditingController(),
+    'ecg': TextEditingController(),
+    'cardiac_mri': TextEditingController(),
+    'bnp': TextEditingController(),
+    'biopsy': TextEditingController(),
+    'biochemistry_report': TextEditingController(),
+  };
+
   final Map<String, String> _fieldLabels = {
     'opd_card': 'OPD Card',
     'echo': 'Echo',
@@ -38,28 +48,24 @@ class _UploadReportPageState extends State<UploadReportPage> {
     'biochemistry_report': 'Biochemistry Report',
   };
 
-  bool _isButtonLocked = false; // New state variable to lock button
+  bool _isButtonLocked = false;
+
+  @override
+  void dispose() {
+    // Dispose all comment controllers
+    _commentControllers.forEach((key, controller) {
+      controller.dispose();
+    });
+    super.dispose();
+  }
 
   Future<String?> _getAuthToken() async {
     try {
       String? token = await SecureStorageService.getData('authToken');
-      print('Retrieved token: ${token != null ? "Token exists (${token.length} chars)" : "No token found"}');
-      if (token != null) {
-        print('Token starts with: ${token.substring(0, token.length > 20 ? 20 : token.length)}...');
-      }
       return token;
     } catch (e) {
       print('Error retrieving auth token: $e');
       return null;
-    }
-  }
-
-  Future<bool> _validateToken(String token) async {
-    try {
-      return token.isNotEmpty && token.length > 10;
-    } catch (e) {
-      print('Token validation error: $e');
-      return false;
     }
   }
 
@@ -76,7 +82,6 @@ class _UploadReportPageState extends State<UploadReportPage> {
         setState(() {
           _selectedFiles[fieldName] = File(file.path);
         });
-        print('Selected file for $fieldName: ${file.name}');
       }
     } catch (e) {
       print('Error picking files: $e');
@@ -84,10 +89,10 @@ class _UploadReportPageState extends State<UploadReportPage> {
   }
 
   Future<void> _uploadFiles() async {
-    if (_isButtonLocked) return; // Prevent further clicks
+    if (_isButtonLocked) return;
 
     setState(() {
-      _isButtonLocked = true; // Lock the button
+      _isButtonLocked = true;
     });
 
     try {
@@ -96,16 +101,13 @@ class _UploadReportPageState extends State<UploadReportPage> {
         throw Exception('No authentication token found');
       }
 
-      bool isValidToken = await _validateToken(authToken);
-      if (!isValidToken) {
-        throw Exception('Invalid authentication token');
-      }
-
       final Map<String, List<File>> filesToUpload = {};
+      final Map<String, String> comments = {};
+
       _selectedFiles.forEach((key, file) {
         if (file != null) {
           filesToUpload[key] = [file];
-          print('Adding file for upload - $key: ${file.path.split('/').last}');
+          comments[key] = _commentControllers[key]!.text;
         }
       });
 
@@ -120,23 +122,17 @@ class _UploadReportPageState extends State<UploadReportPage> {
           ),
         );
         setState(() {
-          _isButtonLocked = false; // Unlock on error
+          _isButtonLocked = false;
         });
         return;
       }
-
-      print('Uploading files: ${filesToUpload.keys.toList()}');
-      print('Patient ID: ${widget.patientId}');
-      print('Auth token length: ${authToken.length}');
 
       final response = await MyHttpHelper.private_multipart_post(
         '/reports/upload/${widget.patientId}',
         filesToUpload,
         authToken,
-        {'patientId': widget.patientId},
+        comments, // Send comments as part of the form data
       );
-
-      print('Upload response: $response');
 
       if (response['statusCode'] == 201 || response['success'] == true || (response.containsKey('success') && response['success'])) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -150,7 +146,6 @@ class _UploadReportPageState extends State<UploadReportPage> {
         );
         Navigator.pop(context, true);
       } else if (response['statusCode'] == 401) {
-        print('Authentication failed - 401 error');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -162,39 +157,24 @@ class _UploadReportPageState extends State<UploadReportPage> {
         );
         await SecureStorageService.deleteData('authToken');
         setState(() {
-          _isButtonLocked = false; // Unlock on error
+          _isButtonLocked = false;
         });
       } else {
-        if (response['errors'] != null) {
-          for (var error in (response['errors'] as List)) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  error.toString(),
-                  style: MyTextTheme.textTheme.bodyMedium?.copyWith(color: Colors.white),
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        } else {
-          String errorMessage = response['error'] ?? response['message'] ?? 'Unknown error occurred';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Upload failed: $errorMessage',
-                style: MyTextTheme.textTheme.bodyMedium?.copyWith(color: Colors.white),
-              ),
-              backgroundColor: Colors.red,
+        String errorMessage = response['error'] ?? response['message'] ?? 'Unknown error occurred';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Upload failed: $errorMessage',
+              style: MyTextTheme.textTheme.bodyMedium?.copyWith(color: Colors.white),
             ),
-          );
-        }
+            backgroundColor: Colors.red,
+          ),
+        );
         setState(() {
-          _isButtonLocked = false; // Unlock on error
+          _isButtonLocked = false;
         });
       }
     } catch (e) {
-      print('Upload error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -205,20 +185,9 @@ class _UploadReportPageState extends State<UploadReportPage> {
         ),
       );
       setState(() {
-        _isButtonLocked = false; // Unlock on error
+        _isButtonLocked = false;
       });
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _checkTokenOnLoad();
-  }
-
-  Future<void> _checkTokenOnLoad() async {
-    final token = await _getAuthToken();
-    print('Token check on page load: ${token != null ? "Available" : "Missing"}');
   }
 
   @override
@@ -242,10 +211,11 @@ class _UploadReportPageState extends State<UploadReportPage> {
               _fieldLabels[field]!,
               field,
               _selectedFiles[field],
+              _commentControllers[field]!,
             )),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: _isButtonLocked ? null : _uploadFiles, // Disable button if locked
+              onPressed: _isButtonLocked ? null : _uploadFiles,
               style: ElevatedButton.styleFrom(
                 backgroundColor: MyColors.primary,
                 shape: RoundedRectangleBorder(
@@ -267,13 +237,13 @@ class _UploadReportPageState extends State<UploadReportPage> {
     );
   }
 
-  Widget _buildFileUploadSection(String title, String fieldName, File? file) {
+  Widget _buildFileUploadSection(String title, String fieldName, File? file, TextEditingController commentController) {
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -281,7 +251,7 @@ class _UploadReportPageState extends State<UploadReportPage> {
               title,
               style: MyTextTheme.textTheme.headlineMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             if (file == null)
               Text(
                 'No file selected',
@@ -289,6 +259,7 @@ class _UploadReportPageState extends State<UploadReportPage> {
               )
             else
               ListTile(
+                contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.insert_drive_file),
                 title: Text(
                   file.path.split('/').last,
@@ -303,7 +274,20 @@ class _UploadReportPageState extends State<UploadReportPage> {
                   },
                 ),
               ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+            TextField(
+              controller: commentController,
+              decoration: InputDecoration(
+                labelText: 'Comments (optional)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                // Adjusted content padding for a shorter field
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              maxLines: 1, // Reduced maxLines to 1 for a shorter field
+            ),
+            const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => _pickFiles(fieldName),
               style: ElevatedButton.styleFrom(
