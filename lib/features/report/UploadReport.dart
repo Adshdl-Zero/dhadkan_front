@@ -7,6 +7,7 @@ import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
+import 'package:image_picker/image_picker.dart'; // Import the image_picker package
 
 class UploadReportPage extends StatefulWidget {
   final String patientId;
@@ -49,6 +50,7 @@ class _UploadReportPageState extends State<UploadReportPage> {
   };
 
   bool _isButtonLocked = false;
+  final ImagePicker _picker = ImagePicker(); // Initialize ImagePicker
 
   @override
   void dispose() {
@@ -85,6 +87,29 @@ class _UploadReportPageState extends State<UploadReportPage> {
       }
     } catch (e) {
       print('Error picking files: $e');
+    }
+  }
+
+  // New method to take a photo
+  Future<void> _takePhoto(String fieldName) async {
+    try {
+      final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+      if (photo != null) {
+        setState(() {
+          _selectedFiles[fieldName] = File(photo.path);
+        });
+      }
+    } catch (e) {
+      print('Error taking photo: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to open camera: $e',
+            style: MyTextTheme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -288,18 +313,41 @@ class _UploadReportPageState extends State<UploadReportPage> {
               maxLines: 1, // Reduced maxLines to 1 for a shorter field
             ),
             const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => _pickFiles(fieldName),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: MyColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+            Row( // Use a Row to place buttons side-by-side
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _pickFiles(fieldName),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: MyColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      file == null ? 'Select File' : 'Change File',
+                      style: MyTextTheme.textTheme.titleMedium,
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(
-                file == null ? 'Select File' : 'Change File',
-                style: MyTextTheme.textTheme.titleMedium,
-              ),
+                const SizedBox(width: 10), // Add some spacing between buttons
+                Expanded(
+                  child: ElevatedButton.icon( // Use ElevatedButton.icon for an icon and text
+                    onPressed: () => _takePhoto(fieldName),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: MyColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: const Icon(Icons.camera_alt, color: Colors.white), // Camera icon
+                    label: Text(
+                      'Take Photo',
+                      style: MyTextTheme.textTheme.titleMedium,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

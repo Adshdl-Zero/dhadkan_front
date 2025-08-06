@@ -4,8 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser; // Ensure correct import
 
 class MyHttpHelper {
-  static const String _baseUrl = 'http://10.81.102.101:3000';
-  //  static const String _baseUrl = 'https://dhadkan-backend.onrender.com';
+  // static const String _baseUrl = 'http://10.81.102.101:3000';
+   static const String _baseUrl = 'https://dhadkan-backend.onrender.com';
   static const mediaURL = "$_baseUrl/media/";
 
   static Future<Map<String, dynamic>> get(String endpoint, String token) async {

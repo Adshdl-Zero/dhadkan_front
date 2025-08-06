@@ -16,14 +16,24 @@ class AllPatientsPage extends StatefulWidget {
 
 class _AllPatientsPageState extends State<AllPatientsPage> {
   List<dynamic> data = [];
+  List<dynamic> filteredData = []; // New: List to store filtered patients
   bool isLoading = true;
   String _token = "";
   String? _errorMessage;
+  final TextEditingController _searchController = TextEditingController(); // New: Controller for search input
 
   @override
   void initState() {
     super.initState();
     _initialize();
+    // New: Add listener for search input changes
+    _searchController.addListener(_filterPatients);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose(); // New: Clean up controller
+    super.dispose();
   }
 
   Future<void> _initialize() async {
@@ -40,7 +50,6 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
         _errorMessage = "Initialization failed";
         isLoading = false;
       });
-      // Added for more detailed error logging
       print("Error during initialization: $e");
     }
   }
@@ -64,9 +73,9 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
       );
 
       if (response['success'] == true || response['success'] == 'true') {
-        // Ensure data is always a List and handle potential null 'data' key
         setState(() {
           data = List<dynamic>.from(response['data'] ?? []);
+          filteredData = data; // New: Initialize filteredData with all patients
           _errorMessage = null;
         });
       } else {
@@ -80,6 +89,25 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
     } finally {
       setState(() => isLoading = false);
     }
+  }
+
+  // New: Function to filter patients based on search input
+  void _filterPatients() {
+    final query = _searchController.text.toLowerCase();
+    if (query.isEmpty) {
+      setState(() => filteredData = data);
+      return;
+    }
+
+    setState(() {
+      filteredData = data.where((item) {
+        if (item is! Map<String, dynamic>) return false;
+        final patient = item['patient'] as Map<String, dynamic>? ?? {};
+        final uhid = patient['uhid']?.toString().toLowerCase() ?? '';
+        final mobile = patient['mobile']?.toString().toLowerCase() ?? '';
+        return uhid.contains(query) || mobile.contains(query);
+      }).toList();
+    });
   }
 
   Widget _buildPatientCard(Map<String, dynamic> patientData) {
@@ -97,7 +125,6 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(5),
-        // Removed the boxShadow property entirely to remove the shadow
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +185,6 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
   }
 
   Future<void> _navigateToPatientDetail(String mobile, String name, String patientId) async {
-    // The parameters are already Non-Nullable Strings due to the ?? operator in _buildPatientCard
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -185,7 +211,7 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(_errorMessage!), // Use ! only if you're certain it's not null here
+            Text(_errorMessage!),
             ElevatedButton(
               onPressed: _fetchPatients,
               child: const Text("Retry"),
@@ -205,17 +231,41 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
         onRefresh: _fetchPatients,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: paddingWidth),
-          child: ListView(
+          child: Column(
             children: [
-              for (final item in data)
-                if (item is Map<String, dynamic>)
-                  _buildPatientCard(item)
-                else
-                // Added print statement for debugging invalid items
-                  (() {
-                    print('Skipping invalid patient data item: $item');
-                    return const SizedBox.shrink();
-                  })(),
+              // Search bar with reduced font size and height
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(fontSize: 14), // Reduced font size for input text
+                  decoration: InputDecoration(
+                    hintText: 'Search by UHID or Mobile Number',
+                    hintStyle: const TextStyle(fontSize: 14), // Reduced font size for hint text
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 20), // Reduced vertical padding for height
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  children: [
+                    for (final item in filteredData) // Updated: Use filteredData
+                      if (item is Map<String, dynamic>)
+                        _buildPatientCard(item)
+                      else
+                        (() {
+                          print('Skipping invalid patient data item: $item');
+                          return const SizedBox.shrink();
+                        })(),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
