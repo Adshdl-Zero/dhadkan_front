@@ -1,19 +1,15 @@
-import 'package:dhadkan/Custom/CustomElevatedButton.dart';
-import 'package:dhadkan/features/auth/DoctorSignUpScreen.dart';
-import 'package:dhadkan/features/auth/PatientSignUpScreen.dart';
-import 'package:dhadkan/features/auth/SelectionScreen.dart';
-import 'package:dhadkan/features/common/Wrapper.dart';
-import 'package:dhadkan/features/doctor/home/DoctorHome.dart';
-import 'package:dhadkan/features/patient/home/PatientHomeScreen.dart';
+import 'package:dhadkan/Custom/custom_elevated_button.dart';
+import 'package:dhadkan/features/auth/selection_screen.dart';
+import 'package:dhadkan/features/common/wrapper.dart';
+import 'package:dhadkan/features/doctor/home/doctor_home.dart';
+import 'package:dhadkan/features/patient/home/patient_home_screen.dart';
 import 'package:dhadkan/utils/constants/colors.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:dhadkan/utils/helpers/helper_functions.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
 import 'package:dhadkan/utils/theme/text_theme.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -71,7 +67,7 @@ class _LandingScreenState extends State<LandingScreen> {
             SnackBar(content: Text(response['message'] ?? 'Login failed')));
       }
     } catch (e) {
-      print('Login error: $e');
+      //print('Login error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: ${e.toString()}')));
     }

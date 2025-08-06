@@ -4,11 +4,10 @@ import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'UploadReport.dart';
+import 'upload_report.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
 import 'package:dhadkan/utils/theme/text_theme.dart';
-import 'package:dhadkan/utils/theme/theme.dart';
 import 'package:dhadkan/utils/constants/colors.dart';
 
 // Report class
@@ -83,7 +82,7 @@ class ReportFile {
 class ReportPage extends StatefulWidget {
   final String patientId;
 
-  const ReportPage({Key? key, required this.patientId}) : super(key: key);
+  const ReportPage({super.key, required this.patientId});
 
   @override
   _ReportPageState createState() => _ReportPageState();
@@ -100,24 +99,19 @@ class _ReportPageState extends State<ReportPage> {
 
   Future<Report?> _fetchReport() async {
     try {
-      print('Fetching report for patient: ${widget.patientId}');
+      // print('Fetching report for patient: ${widget.patientId}');
       String? token = await SecureStorageService.getData('authToken');
       if (token == null) {
-        print('No auth token found');
+        //print('No auth token found');
         throw Exception('Authentication required. Please login again.');
       }
 
       final response = await MyHttpHelper.get("/reports/${widget.patientId}", token);
 
-      print('API Response: $response');
-
-      if (response == null) {
-        print('Response is null');
-        return null;
-      }
+      // print('API Response: $response');
 
       if (response['success'] == false) {
-        print('API Error: ${response['message']}');
+        //print('API Error: ${response['message']}');
         if (response['message']?.contains('token') == true) {
           throw Exception('Authentication failed. Please login again.');
         }
@@ -125,19 +119,19 @@ class _ReportPageState extends State<ReportPage> {
       }
 
       if (response['error'] != null) {
-        print('API Error: ${response['error']}');
+        //print('API Error: ${response['error']}');
         throw Exception(response['error']);
       }
 
       if (response['report'] == null) {
-        print('No report data in response');
+        //print('No report data in response');
         return null;
       }
 
-      print('Report data found: ${response['report']}');
+      //print('Report data found: ${response['report']}');
       return Report.fromJson(response['report']);
     } catch (e) {
-      print('Error fetching report: $e');
+      //print('Error fetching report: $e');
       throw Exception('Failed to load report: $e');
     }
   }
@@ -158,18 +152,18 @@ class _ReportPageState extends State<ReportPage> {
   // This function is no longer strictly needed for uploadedAtIST,
   // but can be kept for other DateTime objects if needed.
   // Changed format to exclude seconds.
-  String _formatDate(DateTime date) {
-    try {
-      return DateFormat('dd MMM yyyy, hh:mm a').format(date);
-    } catch (e) {
-      return 'Date unavailable';
-    }
-  }
+  // String _formatDate(DateTime date) {
+  //   try {
+  //     return DateFormat('dd MMM yyyy, hh:mm a').format(date);
+  //   } catch (e) {
+  //     return 'Date unavailable';
+  //   }
+  // }
 
   void _viewFile(String path, String type, String reportName) {
     // Use the url field from ReportFile if available, otherwise construct with mediaURL
     String filePath = path.startsWith('http') ? path : MyHttpHelper.mediaURL + path;
-    print('Viewing file: $filePath (type: $type, name: $reportName)');
+    //print('Viewing file: $filePath (type: $type, name: $reportName)');
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -445,11 +439,11 @@ class FileViewerScreen extends StatefulWidget {
   final String reportName;
 
   const FileViewerScreen({
-    Key? key,
+    super.key,
     required this.filePath,
     required this.fileType,
     required this.reportName,
-  }) : super(key: key);
+  });
 
   @override
   _FileViewerScreenState createState() => _FileViewerScreenState();
@@ -474,7 +468,7 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
 
   Future<void> _downloadAndSaveFile() async {
     try {
-      print('Downloading file from: ${widget.filePath}');
+      //print('Downloading file from: ${widget.filePath}');
       String? token = await SecureStorageService.getData('authToken');
       if (token == null) {
         throw Exception('No authentication token found');
@@ -499,7 +493,7 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error downloading file: $e');
+      //print('Error downloading file: $e');
       setState(() {
         _errorMessage = 'Failed to load file: $e';
         _isLoading = false;
@@ -511,9 +505,9 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
   void dispose() {
     if (_localFilePath != null) {
       File(_localFilePath!).delete().then((_) {
-        print('Temporary file deleted: $_localFilePath');
+        //print('Temporary file deleted: $_localFilePath');
       }).catchError((e) {
-        print('Error deleting temporary file: $e');
+        //print('Error deleting temporary file: $e');
       });
     }
     super.dispose();

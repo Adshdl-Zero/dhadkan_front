@@ -28,6 +28,8 @@ dependencies:
   dropdown_search: ^5.0.6
   image_picker: ^1.1.2
 
+  http_parser: any
+  path_provider: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,13 +1,12 @@
-import 'package:dhadkan/features/auth/LandingScreen.dart';
-import 'package:dhadkan/features/common/TopBar.dart';
-import 'package:dhadkan/features/doctor/home/Heading.dart';
+import 'package:dhadkan/features/auth/landing_screen.dart';
+import 'package:dhadkan/features/common/top_bar.dart';
+import 'package:dhadkan/features/doctor/home/heading.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../utils/device/device_utility.dart';
-import 'DoctorButtons.dart';
+import 'doctor_buttons.dart';
 
 class DoctorHome extends StatefulWidget {
   const DoctorHome({super.key});
@@ -41,7 +40,7 @@ class _DoctorHomeState extends State<DoctorHome> {
       final response = await MyHttpHelper.private_post('/patient/validate-token', {}, token);
       return response['status'] == 'valid';
     } catch (e) {
-      print("Error validating token: $e");
+      //print("Error validating token: $e");
       // You can decide: consider invalid, or allow offline mode
       return false;
     }

@@ -1,6 +1,5 @@
-import 'package:dhadkan/features/doctor/home/DoctorButton.dart';
+import 'package:dhadkan/features/doctor/home/doctor_button.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
-import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -14,9 +13,9 @@ class DoctorButtons extends StatelessWidget {
     void handleAddPatientPress() {
       Navigator.pushNamed(context, 'doctor/addpatient/');
     }
-    void handleAdddrugPatientPress() {
-      Navigator.pushNamed(context, 'doctor/adddrugpatient/');
-    }
+    // void handleAdddrugPatientPress() {
+    //   Navigator.pushNamed(context, 'doctor/adddrugpatient/');
+    // }
     var screenWidth = MyDeviceUtils.getScreenWidth(context);
     var width = screenWidth * 0.9;
     return Container(

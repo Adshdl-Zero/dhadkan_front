@@ -1,4 +1,3 @@
-import 'package:dhadkan/utils/constants/colors.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/cupertino.dart';

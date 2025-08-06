@@ -1,7 +1,6 @@
-import 'package:dhadkan/features/doctor/home/DoctorButton.dart';
+import 'package:dhadkan/features/doctor/home/doctor_button.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:flutter/material.dart';
-import 'package:dhadkan/features/report/Report.dart';
 
 class DoctorButtonsindisplaydata extends StatelessWidget {
   final String patientMobile;

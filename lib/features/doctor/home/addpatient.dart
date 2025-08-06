@@ -1,8 +1,6 @@
-import 'package:dhadkan/features/auth/PatientSignUpScreen.dart';
-import 'package:dhadkan/features/common/TopBar.dart';
-import 'package:dhadkan/features/doctor/home/PatientAdder.dart';
+import 'package:dhadkan/features/common/top_bar.dart';
+import 'package:dhadkan/features/doctor/home/patient_adder.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 class AddPatient extends StatefulWidget {
   const AddPatient({super.key});

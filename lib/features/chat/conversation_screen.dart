@@ -1,18 +1,16 @@
 import 'dart:async';
 
-import 'package:dhadkan/features/chat/ChatTextBox.dart';
-import 'package:dhadkan/features/chat/TextMessage.dart';
-import 'package:dhadkan/features/common/TopBar.dart';
+import 'package:dhadkan/features/chat/chat_text_box.dart';
+import 'package:dhadkan/features/chat/text_message.dart';
+import 'package:dhadkan/features/common/top_bar.dart';
 
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
-import '../auth/LandingScreen.dart'; // Assuming LandingScreen.dart is in this path
+import '../auth/landing_screen.dart'; // Assuming landing_screen.dart is in this path
 
 class ConversationScreen extends StatefulWidget {
   final String receiver_id;

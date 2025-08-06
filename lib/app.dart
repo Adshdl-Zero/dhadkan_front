@@ -1,18 +1,18 @@
-import 'package:dhadkan/features/auth/LandingScreen.dart';
-import 'package:dhadkan/features/auth/Splash_Screen.dart';
-import 'package:dhadkan/features/chat/ConversationScreen.dart';
-import 'package:dhadkan/features/doctor/home/DoctorHome.dart';
+import 'package:dhadkan/features/auth/landing_screen.dart';
+import 'package:dhadkan/features/auth/splash_screen.dart';
+import 'package:dhadkan/features/chat/conversation_screen.dart';
+import 'package:dhadkan/features/doctor/home/doctor_home.dart';
 import 'package:dhadkan/features/doctor/home/drug.dart/adddrug.dart';
 import 'package:dhadkan/features/doctor/home/addpatient.dart';
 import 'package:dhadkan/features/doctor/home/allPatientsPage.dart';
 // import 'package:dhadkan_front/features/doctor/patientList/PatientList.dart';
-import 'package:dhadkan/features/patient/addData/AddDataScreen.dart';
-import 'package:dhadkan/features/patient/home/PatientHomeScreen.dart';
+import 'package:dhadkan/features/patient/addData/adddatascreen.dart';
+import 'package:dhadkan/features/patient/home/patient_home_screen.dart';
 // import 'package:dhadkan_front/features/patient/tests/TestsScreen.dart';
 import 'package:dhadkan/utils/theme/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:dhadkan/features/report/Report.dart'; // Add this import
-import 'package:dhadkan/features/report/UploadReport.dart';
+import 'package:dhadkan/features/report/report.dart'; // Add this import
+import 'package:dhadkan/features/report/upload_report.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

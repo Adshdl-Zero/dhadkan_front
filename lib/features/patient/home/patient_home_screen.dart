@@ -5,22 +5,20 @@ import 'package:intl/intl.dart';
 import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
-import 'package:dhadkan/features/auth/LandingScreen.dart';
-import 'package:dhadkan/features/common/TopBar.dart';
-import 'package:dhadkan/features/patient/home/History.dart';
-import 'package:dhadkan/features/patient/home/PatientButtons.dart';
-import 'package:dhadkan/features/patient/home/PatientGraph.dart';
+import 'package:dhadkan/features/auth/landing_screen.dart';
+import 'package:dhadkan/features/common/top_bar.dart';
+import 'package:dhadkan/features/patient/home/history.dart';
+import 'package:dhadkan/features/patient/home/patient_buttons.dart';
+import 'package:dhadkan/features/patient/home/patient_graph.dart';
 
 // For http.delete
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 
-// Exporting models so History.dart can import them from here if needed,
-// or ensure History.dart has its own correct model definitions.
-// The provided History.dart already imports from '.../PatientHomeScreen.dart'
+// Exporting models so history.dart can import them from here if needed,
+// or ensure history.dart has its own correct model definitions.
+// The provided history.dart already imports from '.../patient_home_screen.dart'
 // so these models should be accessible.
-export 'package:dhadkan/features/patient/home/PatientHomeScreen.dart' show PatientDrugRecord, Medicine;
+export 'package:dhadkan/features/patient/home/patient_home_screen.dart' show PatientDrugRecord, Medicine;
 
 
 //-------------------- Display Widget --------------------
@@ -120,7 +118,7 @@ class _HeadingState extends State<Heading> {
       if (!mounted) return;
 
       if ((response['status'] == 'success' || response['success'] == true || response['success'] == 'true') && response['data'] != null) {
-        print("Patient Details fetched: ${response['data']}");
+        //print("Patient Details fetched: ${response['data']}");
         setState(() {
           patientDetails = {
             "name": response['data']['name'] ?? "N/A",
@@ -142,7 +140,7 @@ class _HeadingState extends State<Heading> {
       }
     } catch (e) {
       if (!mounted) return;
-      print("Error loading patient details in Heading: $e");
+      //print("Error loading patient details in Heading: $e");
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text("Error loading patient data.")));
     }
@@ -175,7 +173,7 @@ class _HeadingState extends State<Heading> {
               decoration: BoxDecoration(
                 color: Colors.grey[300],
                 borderRadius: BorderRadius.circular(45), // For circle
-                image: DecorationImage(
+                image: const DecorationImage(
                   image: AssetImage('assets/Images/patient2.png'),
                   fit: BoxFit.cover,
                 ),
@@ -202,7 +200,7 @@ class _HeadingState extends State<Heading> {
 }
 
 //-------------------- Data Model Classes --------------------
-// These models are defined here. Ensure History.dart uses these if it imports from this file.
+// These models are defined here. Ensure history.dart uses these if it imports from this file.
 class PatientDrugRecord {
   final String? id; // Corresponds to _id from MongoDB
   // final String? name; // Name of patient, usually in Heading, not repeated per record
@@ -264,7 +262,7 @@ class PatientDrugRecord {
   }
 }
 
-// In PatientHomeScreen.dart
+// In patient_home_screen.dart
 class Medicine {
   final String? name;
   final String? format;
@@ -399,7 +397,7 @@ class _PatientHomeState extends State<PatientHome> {
         return false;
       }
     } catch (e) {
-      print("Token validation failed: $e");
+      //print("Token validation failed: $e");
       return false; // Treat errors as invalid token
     }
   }
@@ -426,10 +424,10 @@ class _PatientHomeState extends State<PatientHome> {
           doctorId = response['data']['doctor']?['_id'] ?? response['data']['doctorId'] ?? '';
         });
       } else {
-        print("Failed to fetch patient details: ${response['message']}");
+        //print("Failed to fetch patient details: ${response['message']}");
       }
     } catch (e) {
-      print('Error fetching patient details: $e');
+      //print('Error fetching patient details: $e');
     }
   }
 
@@ -481,11 +479,11 @@ class _PatientHomeState extends State<PatientHome> {
         });
       } else {
         setState(() { _isLoadingHistory = false; });
-        print("Failed to fetch daily data: ${allRecordsResponse['message']}");
+        //print("Failed to fetch daily data: ${allRecordsResponse['message']}");
       }
     } catch (e) {
       if (!mounted) return;
-      print('Error fetching daily data: $e');
+      //print('Error fetching daily data: $e');
       setState(() { _isLoadingHistory = false; });
     }
   }
@@ -554,14 +552,14 @@ class _PatientHomeState extends State<PatientHome> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error: $errorMessage'), backgroundColor: Colors.red),
           );
-          print('Failed to delete history entry. Response: $response');
+          //print('Failed to delete history entry. Response: $response');
         }
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: ${e.toString()}'), backgroundColor: Colors.red),
         );
-        print('Error deleting history entry via PatientHomeScreen: $e');
+        //print('Error deleting history entry via PatientHomeScreen: $e');
       }
     }
   }

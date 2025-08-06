@@ -1,8 +1,7 @@
-import 'package:dhadkan/features/doctor/home/Display.dart';
+import 'package:dhadkan/features/doctor/home/display.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class Heading extends StatefulWidget {
@@ -43,14 +42,14 @@ class _HeadingState extends State<Heading> {
       if (response['success'] == 'true'){
         setState(() {
           doctorDetails = response['data'];
-          print(response['data']);
+          //print(response['data']);
         });
         return;
       }
     }catch(e){
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text("Error in loading_data")));
-      print(e);
+      //print(e);
     }
   }
 

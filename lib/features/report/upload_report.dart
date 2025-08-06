@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:dhadkan/utils/theme/text_theme.dart';
-import 'package:dhadkan/utils/theme/theme.dart';
 import 'package:dhadkan/utils/constants/colors.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:file_selector/file_selector.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
 import 'package:image_picker/image_picker.dart'; // Import the image_picker package
 
 class UploadReportPage extends StatefulWidget {
   final String patientId;
 
-  const UploadReportPage({Key? key, required this.patientId}) : super(key: key);
+  const UploadReportPage({super.key, required this.patientId});
 
   @override
   _UploadReportPageState createState() => _UploadReportPageState();
@@ -66,7 +64,7 @@ class _UploadReportPageState extends State<UploadReportPage> {
       String? token = await SecureStorageService.getData('authToken');
       return token;
     } catch (e) {
-      print('Error retrieving auth token: $e');
+      //print('Error retrieving auth token: $e');
       return null;
     }
   }
@@ -75,8 +73,8 @@ class _UploadReportPageState extends State<UploadReportPage> {
     try {
       final file = await openFile(
         acceptedTypeGroups: [
-          XTypeGroup(label: 'Images', extensions: ['jpg', 'jpeg', 'png']),
-          XTypeGroup(label: 'PDF', extensions: ['pdf']),
+          const XTypeGroup(label: 'Images', extensions: ['jpg', 'jpeg', 'png']),
+          const XTypeGroup(label: 'PDF', extensions: ['pdf']),
         ],
       );
 
@@ -86,7 +84,7 @@ class _UploadReportPageState extends State<UploadReportPage> {
         });
       }
     } catch (e) {
-      print('Error picking files: $e');
+      //print('Error picking files: $e');
     }
   }
 
@@ -100,7 +98,7 @@ class _UploadReportPageState extends State<UploadReportPage> {
         });
       }
     } catch (e) {
-      print('Error taking photo: $e');
+      //print('Error taking photo: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

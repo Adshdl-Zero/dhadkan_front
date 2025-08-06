@@ -1,6 +1,4 @@
 import 'package:dhadkan/utils/constants/colors.dart';
-import 'package:dhadkan/utils/device/device_utility.dart';
-import 'package:dhadkan/utils/helpers/helper_functions.dart';
 import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';

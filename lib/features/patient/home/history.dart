@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:dhadkan/features/patient/home/PatientHomeScreen.dart';
-import 'package:dhadkan/features/patient/addData/AddDataScreen.dart';
+import 'package:dhadkan/features/patient/home/patient_home_screen.dart';
+import 'package:dhadkan/features/patient/addData/adddatascreen.dart';
 
 class History extends StatelessWidget {
   final List<PatientDrugRecord> history;
@@ -280,7 +280,7 @@ class History extends StatelessWidget {
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         title: Text(
-          '${medicine.name ?? 'N/A'}',
+          medicine.name ?? 'N/A',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
@@ -305,7 +305,7 @@ class History extends StatelessWidget {
                           text: 'Format: ',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        TextSpan(text: '${medicine.format ?? 'N/A'}'),
+                        TextSpan(text: medicine.format ?? 'N/A'),
                       ],
                     ),
                   ),
@@ -332,7 +332,7 @@ class History extends StatelessWidget {
                       text: 'Frequency: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: '${medicine.frequency ?? 'N/A'}'),
+                    TextSpan(text: medicine.frequency ?? 'N/A'),
                   ],
                 ),
               ),
@@ -345,7 +345,7 @@ class History extends StatelessWidget {
                       text: 'Timing: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: '${medicine.medicineTiming ?? 'N/A'}'),
+                    TextSpan(text: medicine.medicineTiming ?? 'N/A'),
                   ],
                 ),
               ),
@@ -358,7 +358,7 @@ class History extends StatelessWidget {
                       text: 'Generic: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: '${medicine.generic ?? 'N/A'}'),
+                    TextSpan(text: medicine.generic ?? 'N/A'),
                   ],
                 ),
               ),
@@ -371,7 +371,7 @@ class History extends StatelessWidget {
                       text: 'Company name: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: '${medicine.companyName ?? 'N/A'}'),
+                    TextSpan(text: medicine.companyName ?? 'N/A'),
                   ],
                 ),
               ),

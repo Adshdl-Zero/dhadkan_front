@@ -1,5 +1,5 @@
-import 'package:dhadkan/Custom/CustomElevatedButton.dart';
-import 'package:dhadkan/features/common/TopBar.dart';
+import 'package:dhadkan/Custom/custom_elevated_button.dart';
+import 'package:dhadkan/features/common/top_bar.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:dhadkan/features/common/medicine_data.dart';
-import 'package:dhadkan/features/patient/home/PatientHomeScreen.dart' show PatientDrugRecord, Medicine;
+import 'package:dhadkan/features/patient/home/patient_home_screen.dart' show PatientDrugRecord;
+import 'dart:developer' as developer;
 
 class AddData extends StatefulWidget {
   final PatientDrugRecord? record;
@@ -113,7 +114,7 @@ class _AddDataState extends State<AddData> {
         });
       }
     } catch (e) {
-      print("Error fetching medicine categories: $e");
+      //print("Error fetching medicine categories: $e");
       // Handle error, e.g., show a snackbar
     }
   }
@@ -302,9 +303,9 @@ class _AddDataState extends State<AddData> {
 
   void startListening(TextEditingController controller) async {
     if (!await _speech.initialize(
-      onStatus: (status) => print("Status: $status"),
+      onStatus: (status) => developer.log("Status: $status"),
       onError: (error) {
-        print("Error: $error");
+        //print("Error: $error");
         _showErrorSnackbar(context, 'Speech recognition error: ${error.errorMsg}');
       },
     )) {
@@ -1208,21 +1209,21 @@ class _AddDataState extends State<AddData> {
                   ElevatedButton(
                     style: ButtonStyle(
                       backgroundColor:
-                      MaterialStateProperty.all(const Color(0xFFFF5A5A)),
+                      WidgetStateProperty.all(const Color(0xFFFF5A5A)),
                       minimumSize:
-                      MaterialStateProperty.all(const Size(double.infinity, 40)),
-                      shape: MaterialStateProperty.all(
+                      WidgetStateProperty.all(const Size(double.infinity, 40)),
+                      shape: WidgetStateProperty.all(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      textStyle: MaterialStateProperty.all(
+                      textStyle: WidgetStateProperty.all(
                         const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      foregroundColor: MaterialStateProperty.all(Colors.white),
+                      foregroundColor: WidgetStateProperty.all(Colors.white),
                     ),
                     onPressed: () => _removeMedicineFields(section, i),
                     child: const Text("Remove"),

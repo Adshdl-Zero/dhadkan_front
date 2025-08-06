@@ -1,5 +1,5 @@
 
-import 'package:dhadkan/features/common/Wrapper.dart';
+import 'package:dhadkan/features/common/wrapper.dart';
 import 'package:dhadkan/utils/constants/colors.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:dhadkan/utils/http/http_client.dart';

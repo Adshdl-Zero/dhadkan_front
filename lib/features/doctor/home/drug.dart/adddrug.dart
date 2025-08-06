@@ -1,15 +1,14 @@
-import 'package:dhadkan/Custom/CustomElevatedButton.dart';
-import 'package:dhadkan/features/common/TopBar.dart';
-import 'package:dhadkan/utils/constants/colors.dart';
+import 'package:dhadkan/Custom/custom_elevated_button.dart';
+import 'package:dhadkan/features/common/top_bar.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
-import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:dhadkan/features/doctor/home/PatientDrugDataScreen.dart';
+import 'package:dhadkan/features/doctor/home/patient_drugdatascreen.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:dhadkan/features/common/medicine_data.dart';
+import 'dart:developer' as developer;
 
 class AddDrugPage extends StatefulWidget {
   final String patientMobile;
@@ -128,7 +127,7 @@ class _AddDrugPageState extends State<AddDrugPage> {
         });
       }
     } catch (e) {
-      print("Error fetching medicine categories: $e");
+      //print("Error fetching medicine categories: $e");
       _showErrorSnackbar(context, 'Error fetching medicine categories');
     }
   }
@@ -327,9 +326,9 @@ class _AddDrugPageState extends State<AddDrugPage> {
 
   void startListening(TextEditingController controller) async {
     if (!await _speech.initialize(
-      onStatus: (status) => print("Speech Status: $status"),
+      onStatus: (status) => developer.log("Speech Status: $status"),
       onError: (error) {
-        print("Speech Error: $error");
+        //print("Speech Error: $error");
         _showErrorSnackbar(context, 'Speech recognition error: ${error.errorMsg}');
       },
     )) {
@@ -641,9 +640,9 @@ class _AddDrugPageState extends State<AddDrugPage> {
           _isButtonLocked = false;
         });
       }
-    } catch (e, stackTrace) {
-      print('Submit error: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
+      //print('Submit error: $e');
+      //print('Stack trace: $stackTrace');
       _showErrorSnackbar(context, 'Error: ${e.toString()}');
       setState(() {
         _isButtonLocked = false;
@@ -1205,21 +1204,21 @@ class _AddDrugPageState extends State<AddDrugPage> {
                   ElevatedButton(
                     style: ButtonStyle(
                       backgroundColor:
-                      MaterialStateProperty.all(const Color(0xFFFF5A5A)),
+                      WidgetStateProperty.all(const Color(0xFFFF5A5A)),
                       minimumSize:
-                      MaterialStateProperty.all(const Size(double.infinity, 40)),
-                      shape: MaterialStateProperty.all(
+                      WidgetStateProperty.all(const Size(double.infinity, 40)),
+                      shape: WidgetStateProperty.all(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      textStyle: MaterialStateProperty.all(
+                      textStyle: WidgetStateProperty.all(
                         const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      foregroundColor: MaterialStateProperty.all(Colors.white),
+                      foregroundColor: WidgetStateProperty.all(Colors.white),
                     ),
                     onPressed: () => _removeMedicineFields(section, i),
                     child: const Text("Remove"),

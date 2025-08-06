@@ -90,12 +90,12 @@ class MyHttpHelper {
   }
 
   static Map<String, dynamic> _handleResponseData(int statusCode, String responseData) {
-    print(statusCode);
+    // print(statusCode);
     return json.decode(responseData);
   }
 
   static Map<String, dynamic> _handleResponse(http.Response response) {
-    print(response.statusCode);
+    // print(response.statusCode);
     return json.decode(response.body);
   }
 }

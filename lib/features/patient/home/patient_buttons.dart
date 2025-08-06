@@ -1,7 +1,5 @@
-import 'package:dhadkan/features/chat/ConversationScreen.dart';
-import 'package:dhadkan/features/patient/home/PatientButton.dart';
+import 'package:dhadkan/features/patient/home/patient_button.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
-import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:dhadkan/features/doctor/home/DoctorHome.dart';
+import 'package:dhadkan/features/doctor/home/doctor_home.dart';
 import 'package:dhadkan/utils/constants/colors.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
@@ -8,6 +8,7 @@ import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:http/http.dart' as http;
+import 'dart:developer' as developer;
 
 class Patientadder extends StatefulWidget {
   const Patientadder({super.key});
@@ -51,10 +52,10 @@ class _PatientadderState extends State<Patientadder> {
 
   void startListening(TextEditingController controller) async {
     if (!await _speech.initialize(
-      onStatus: (status) => print("Status: $status"),
-      onError: (error) => print("Error: $error"),
+      onStatus: (status) => developer.log("Status: $status"),
+      onError: (error) => developer.log("Error: $error"),
     )) {
-      print("Speech recognition is not available.");
+      //print("Speech recognition is not available.");
       return;
     }
 
@@ -216,15 +217,15 @@ class _PatientadderState extends State<Patientadder> {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print("Name: ${data['name']}");
-        print("Mobile: ${data['mobile']}");
-        print("Gender: ${data['gender']}");
+        //final data = jsonDecode(response.body);
+        //print("Name: ${data['name']}");
+        //print("Mobile: ${data['mobile']}");
+        //print("Gender: ${data['gender']}");
       } else {
-        print("Error: ${response.body}");
+        //print("Error: ${response.body}");
       }
     } catch (e) {
-      print("Failed to connect: $e");
+      //print("Failed to connect: $e");
     }
   }
 

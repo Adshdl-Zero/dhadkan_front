@@ -1,11 +1,11 @@
-import 'package:dhadkan/features/auth/LandingScreen.dart';
-import 'package:dhadkan/features/doctor/home/PatientDrugDataScreen.dart';
-import 'package:dhadkan/features/patient/home/PatientGraph.dart';
+import 'package:dhadkan/features/auth/landing_screen.dart';
+import 'package:dhadkan/features/doctor/home/patient_drugdatascreen.dart';
+import 'package:dhadkan/features/patient/home/patient_graph.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:dhadkan/utils/http/http_client.dart';
-import 'package:dhadkan/features/common/TopBar.dart';
+import 'package:dhadkan/features/common/top_bar.dart';
 
 class AllPatientsPage extends StatefulWidget {
   const AllPatientsPage({super.key});
@@ -50,7 +50,7 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
         _errorMessage = "Initialization failed";
         isLoading = false;
       });
-      print("Error during initialization: $e");
+      // print("Error during initialization: $e");
     }
   }
 
@@ -85,7 +85,7 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
       }
     } catch (e) {
       setState(() => _errorMessage = "Network error occurred");
-      print("Error fetching patients: $e");
+      // print("Error fetching patients: $e");
     } finally {
       setState(() => isLoading = false);
     }
@@ -154,9 +154,9 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       alignment: Alignment.centerRight,
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Text(
                           'More Info',
                           style: TextStyle(fontSize: 14, color: Colors.black54),
@@ -260,7 +260,7 @@ class _AllPatientsPageState extends State<AllPatientsPage> {
                         _buildPatientCard(item)
                       else
                         (() {
-                          print('Skipping invalid patient data item: $item');
+                          // print('Skipping invalid patient data item: $item');
                           return const SizedBox.shrink();
                         })(),
                   ],

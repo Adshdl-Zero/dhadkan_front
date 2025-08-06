@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:dhadkan/features/auth/LandingScreen.dart';
-import 'package:dhadkan/features/doctor/home/DoctorHome.dart';
-import 'package:dhadkan/features/patient/home/PatientHomeScreen.dart';
+import 'package:dhadkan/features/auth/landing_screen.dart';
+import 'package:dhadkan/features/doctor/home/doctor_home.dart';
+import 'package:dhadkan/features/patient/home/patient_home_screen.dart';
 import 'package:dhadkan/utils/helpers/helper_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';

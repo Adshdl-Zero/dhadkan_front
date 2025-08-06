@@ -13,34 +13,34 @@ class MedicineData {
     try {
       String? token = await SecureStorageService.getData('authToken');
       if (token == null) {
-        print('No authentication token found');
+        //print('No authentication token found');
         return _medicineCategories;
       }
 
       final response = await MyHttpHelper.private_get('/drugs/get', token);
-      print('Drugs API Response: $response');
+      //print('Drugs API Response: $response');
 
       if (response.containsKey('success') &&
           response['success'].toString() == "true") {
         List<dynamic> data = response['data'] ?? [];
         if (data.isEmpty) {
-          print('No drug data returned from API');
+          //print('No drug data returned from API');
           return _medicineCategories;
         }
 
         _medicineCategories = {
-          'A': List<String>.from(data.length > 0 ? data[0] : []),
+          'A': List<String>.from(data.isNotEmpty ? data[0] : []),
           'B': List<String>.from(data.length > 1 ? data[1] : []),
           'C': List<String>.from(data.length > 2 ? data[2] : []),
           'D': List<String>.from(data.length > 3 ? data[3] : []),
         };
       } else {
-        print('API error: ${response['message'] ?? 'Unknown error'}');
+        //print('API error: ${response['message'] ?? 'Unknown error'}');
         return _medicineCategories;
       }
-    } catch (e, stackTrace) {
-      print('Error fetching medicine categories: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
+      //print('Error fetching medicine categories: $e');
+      //print('Stack trace: $stackTrace');
       return _medicineCategories;
     }
     return _medicineCategories;
@@ -53,7 +53,7 @@ class MedicineData {
     try {
       String? token = await SecureStorageService.getData('authToken');
       if (token == null) {
-        print('No authentication token found');
+        //print('No authentication token found');
         return false;
       }
 
@@ -62,7 +62,7 @@ class MedicineData {
         {'name': name, 'class': drugClass},
         token,
       );
-      print('Add Medicine Response: $response');
+      //print('Add Medicine Response: $response');
 
       if (response.containsKey('success') &&
           response['success'].toString() == "true") {
@@ -72,12 +72,12 @@ class MedicineData {
         ]..sort();
         return true;
       } else {
-        print('Add medicine error: ${response['message'] ?? 'Unknown error'}');
+        //print('Add medicine error: ${response['message'] ?? 'Unknown error'}');
         return false;
       }
-    } catch (e, stackTrace) {
-      print('Error adding medicine: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
+      //print('Error adding medicine: $e');
+      //print('Stack trace: $stackTrace');
       return false;
     }
   }

@@ -1,5 +1,5 @@
-import 'package:dhadkan/features/doctor/DoctorButtonsindisplaydata.dart';
-import 'package:dhadkan/features/patient/home/PatientGraph.dart';
+import 'package:dhadkan/features/doctor/doctor_buttonsindisplaydata.dart';
+import 'package:dhadkan/features/patient/home/patient_graph.dart';
 import 'package:dhadkan/utils/storage/secure_storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -485,7 +485,7 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.edit, color: Color(0xFF2196F3)),
+                    icon: const Icon(Icons.edit, color: Color(0xFF2196F3)),
                     tooltip: 'Edit this entry',
                     onPressed: () {
                       if (record.id != null) {
@@ -510,7 +510,7 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
                     },
                   ),
                   IconButton(
-                    icon: Icon(Icons.delete, color: Color(0xFFFF5A5A)),
+                    icon: const Icon(Icons.delete, color: Color(0xFFFF5A5A)),
                     tooltip: 'Delete this entry',
                     onPressed: () {
                       if (record.id != null) {
@@ -706,7 +706,7 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         title: Text(
-          '${medicine.name ?? 'N/A'}',
+          medicine.name ?? 'N/A',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
@@ -732,7 +732,7 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
                           text: 'Format: ',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        TextSpan(text: '${medicine.format ?? 'N/A'}'),
+                        TextSpan(text: medicine.format ?? 'N/A'),
                       ],
                     ),
                   ),
@@ -759,7 +759,7 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
                       text: 'Frequency: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: '${medicine.frequency ?? 'N/A'}'),
+                    TextSpan(text: medicine.frequency ?? 'N/A'),
                   ],
                 ),
               ),
@@ -772,7 +772,7 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
                       text: 'Timing: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: '${medicine.medicineTiming ?? 'N/A'}'),
+                    TextSpan(text: medicine.medicineTiming ?? 'N/A'),
                   ],
                 ),
               ),
@@ -785,7 +785,7 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
                       text: 'Generic: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: '${medicine.generic ?? 'N/A'}'),
+                    TextSpan(text: medicine.generic ?? 'N/A'),
                   ],
                 ),
               ),
@@ -798,7 +798,7 @@ class _PatientDrugDataScreenState extends State<PatientDrugDataScreen> {
                       text: 'Company name: ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(text: '${medicine.companyName ?? 'N/A'}'),
+                    TextSpan(text: medicine.companyName ?? 'N/A'),
                   ],
                 ),
               ),

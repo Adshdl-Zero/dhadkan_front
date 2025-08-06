@@ -1,10 +1,6 @@
-import 'package:dhadkan/features/common/Graph.dart';
-import 'package:dhadkan/utils/constants/colors.dart';
+import 'package:dhadkan/features/common/graph.dart';
 import 'package:dhadkan/utils/device/device_utility.dart';
-import 'package:dhadkan/utils/helpers/helper_functions.dart';
-import 'package:dhadkan/utils/theme/text_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 class PatientGraph extends StatelessWidget {
   final Map<String, dynamic> graphData;
@@ -35,10 +31,18 @@ class PatientGraph extends StatelessWidget {
     }
 
     // Pad all arrays to match maxLength
-    while (diastolic.length < maxLength) diastolic.add(0.0);
-    while (systolic.length < maxLength) systolic.add(0.0);
-    while (weight.length < maxLength) weight.add(0.0);
-    while (hr.length < maxLength) hr.add(0.0); // Pad hr array
+    while (diastolic.length < maxLength) {
+      diastolic.add(0.0);
+    }
+    while (systolic.length < maxLength) {
+      systolic.add(0.0);
+    }
+    while (weight.length < maxLength) {
+      weight.add(0.0);
+    }
+    while (hr.length < maxLength) {
+      hr.add(0.0); // Pad hr array
+    }
 
     return Container(
       width: width,
